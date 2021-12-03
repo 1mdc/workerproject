@@ -2,18 +2,54 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 
 describe("mintable erc20", function () {
-  it("Should return the new greeting once it's changed", async function () {
-    const MinetableErc20Factory = await ethers.getContractFactory("MinetableERC20");
-    const greeter = await MinetableErc20Factory.deploy("Hello, world!");
-    await greeter.deployed();
-
-    expect(await greeter.greet()).to.equal("Hello, world!");
-
-    const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
-
-    // wait until the transaction is mined
-    await setGreetingTx.wait();
-
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
+  it("owner can mint new coin", async function () {
+    const [admin] = await ethers.getSigners();
+    const mintableErc20Factory = await ethers.getContractFactory(
+      "MintableERC20"
+    );
+    const mintableErc20 = await mintableErc20Factory
+      .connect(admin)
+      .deploy("Peon", "PEON");
+    await mintableErc20.deployed();
+    await mintableErc20.connect(admin).mint(admin.address, 1000);
+    expect(await mintableErc20.balanceOf(admin.address)).to.equal(1000);
+  });
+  it("non owner should not mint new coin", async function () {
+    const [admin, user1] = await ethers.getSigners();
+    const mintableErc20Factory = await ethers.getContractFactory(
+      "MintableERC20"
+    );
+    const mintableErc20 = await mintableErc20Factory
+      .connect(admin)
+      .deploy("Peon", "PEON");
+    await mintableErc20.deployed();
+    await expect(
+      mintableErc20.connect(user1).mint(admin.address, 1000)
+    ).to.be.revertedWith("sender does not have permission to mint");
+  });
+  it("should not allow normal user set peon address", async function () {
+    const [admin, user1, user2] = await ethers.getSigners();
+    const mintableErc20Factory = await ethers.getContractFactory(
+      "MintableERC20"
+    );
+    const mintableErc20 = await mintableErc20Factory
+      .connect(admin)
+      .deploy("Peon", "PEON");
+    await mintableErc20.deployed();
+    await expect(
+      mintableErc20.connect(user1).setPeonAddress(user2.address)
+    ).to.be.revertedWith("sender does not have permission to set peon");
+  });
+  it("should allow admin user set peon address", async function () {
+    const [admin, user1, user2] = await ethers.getSigners();
+    const mintableErc20Factory = await ethers.getContractFactory(
+      "MintableERC20"
+    );
+    const mintableErc20 = await mintableErc20Factory
+      .connect(admin)
+      .deploy("Peon", "PEON");
+    await mintableErc20.deployed();
+    await mintableErc20.connect(admin).setPeonAddress(user2.address);
+    expect(await mintableErc20.peonAddress()).to.equals(user2.address);
   });
 });
