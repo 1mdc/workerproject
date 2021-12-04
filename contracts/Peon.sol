@@ -32,7 +32,10 @@ contract Peon is ERC721 {
 
     event MintedPeon(uint indexed peonId, address indexed owner);
 
-    constructor(address _treasuryKeeperAddress, address _mineralTokenAddress, uint _maxPeon, uint adminPreown) ERC721("Peon", "PEON") {
+    constructor(address _treasuryKeeperAddress,
+        address _mineralTokenAddress,
+        uint _maxPeon,
+        uint adminPreown) ERC721("Peon", "PEON") {
         treasuryKeeperAddress = _treasuryKeeperAddress;
         mineralTokenAddress = _mineralTokenAddress;
         maxPeon = _maxPeon;
@@ -61,9 +64,9 @@ contract Peon is ERC721 {
         address currentOwner = ownerOf(peonId);
         require(currentOwner == msg.sender, "You are not owner of this peon");
         require(bids[peonId][bidder] > 0, "Could not find bidder address");
-        _harvest(peonId, msg.sender);
         Address.sendValue(payable(currentOwner), bids[peonId][bidder]);
         safeTransferFrom(currentOwner, bidder, peonId);
+        bids[peonId][bidder] = 0;
     }
 
     function _mintPeon(address sender, uint peonId) private {
