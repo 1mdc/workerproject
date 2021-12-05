@@ -32,9 +32,11 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 20000, 1);
+      .deploy(admin.address, mintableErc20.address, 20000);
     await peon.deployed();
+    await peon.preSale(1);
     await mintableErc20.setPeonAddress(peon.address);
+    await peon.startSale();
   });
   it("setup peon and token", async function () {
     expect(await mintableErc20.peonAddress()).to.equal(peon.address);
@@ -48,8 +50,9 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     const peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 20000, 2);
+      .deploy(admin.address, mintableErc20.address, 20000);
     await peon.deployed();
+    await peon.preSale(2);
     await mintableErc20.setPeonAddress(peon.address);
 
     expect(await peon.ownerOf(0)).to.equal(admin.address);
@@ -76,9 +79,11 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     const peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 2, 1);
+      .deploy(admin.address, mintableErc20.address, 2);
     await peon.deployed();
+    await peon.preSale(1);
     await mintableErc20.setPeonAddress(peon.address);
+    await peon.startSale();
 
     await peon
       .connect(user1)
@@ -179,6 +184,9 @@ describe("peon contract", function () {
         ).toString()
       )
     ).to.equal(1);
+    expect(await peon.getBid(0, user1.address)).to.equal(
+      ethers.utils.parseEther("0")
+    );
   });
   it("only owner can accept a bid", async function () {
     await peon.connect(user1).bid(0, { value: ethers.utils.parseEther("0.1") });
@@ -224,9 +232,11 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     const peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 20000, 2);
+      .deploy(admin.address, mintableErc20.address, 20000);
     await peon.deployed();
+    await peon.preSale(2);
     await mintableErc20.setPeonAddress(peon.address);
+    await peon.startSale();
 
     await peon.connect(user1).bid(0, { value: ethers.utils.parseEther("0.1") });
     await peon.connect(user1).bid(1, { value: ethers.utils.parseEther("0.2") });
@@ -351,6 +361,51 @@ describe("peon contract", function () {
   it("only keeper can withdraw fund", async function () {
     await expect(peon.connect(user1).withdraw()).to.be.revertedWith(
       "You are not treasury keeper"
+    );
+  });
+  it("user cannot mint if not sale", async function () {
+    const mintableErc20 = await minetableErc20Factory
+      .connect(admin)
+      .deploy("Mineral", "MNR");
+    await mintableErc20.deployed();
+    const peon = await peonFactory
+      .connect(admin)
+      .deploy(admin.address, mintableErc20.address, 2000);
+    await peon.deployed();
+    await peon.preSale(1);
+    await mintableErc20.setPeonAddress(peon.address);
+    await expect(
+      peon.connect(user1).mint(1, { value: ethers.utils.parseEther("0.042") })
+    ).to.be.revertedWith("Sale was not started");
+  });
+  it("user cannot bid if not sale", async function () {
+    const mintableErc20 = await minetableErc20Factory
+      .connect(admin)
+      .deploy("Mineral", "MNR");
+    await mintableErc20.deployed();
+    const peon = await peonFactory
+      .connect(admin)
+      .deploy(admin.address, mintableErc20.address, 2000);
+    await peon.deployed();
+    await peon.preSale(1);
+    await mintableErc20.setPeonAddress(peon.address);
+    await expect(
+      peon.connect(user1).bid(0, { value: ethers.utils.parseEther("0.1") })
+    ).to.be.revertedWith("Sale was not started");
+  });
+  it("admin cannot withdraw if not sale", async function () {
+    const mintableErc20 = await minetableErc20Factory
+      .connect(admin)
+      .deploy("Mineral", "MNR");
+    await mintableErc20.deployed();
+    const peon = await peonFactory
+      .connect(admin)
+      .deploy(admin.address, mintableErc20.address, 2000);
+    await peon.deployed();
+    await peon.preSale(1);
+    await mintableErc20.setPeonAddress(peon.address);
+    await expect(peon.connect(admin).withdraw()).to.be.revertedWith(
+      "Sale was not started"
     );
   });
 });
