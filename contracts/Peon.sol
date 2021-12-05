@@ -27,13 +27,18 @@ contract Peon is ERC721 {
     uint public mintedPeon = 0;
     uint public maxPeon;
     uint256 public mintFee = 0.042 * 10**18;
-    uint public maxBuy = 10;
     uint funded = 0;
-    bool openSale = false;
+    uint public openSale = 0;
+    bool public isPreSale = true;
 
     event AcceptBidEvent(uint indexed peonId, address indexed owner);
     event BidEvent(uint indexed peonId, address indexed owner);
     event CancelEvent(uint indexed peonId, address indexed owner);
+
+    modifier onlyKeeper {
+        require(msg.sender == treasuryKeeperAddress, "You are not treasury keeper");
+        _;
+    }
 
     constructor(address _treasuryKeeperAddress,
         address _mineralTokenAddress,
@@ -43,18 +48,21 @@ contract Peon is ERC721 {
         maxPeon = _maxPeon;
     }
 
-    function preSale(uint numberOfPresales) public {
-        require(openSale == false, "Pre-sale was ended");
-        require(treasuryKeeperAddress == msg.sender, "You are not treasury keeper");
+    function preSale(uint numberOfPresales) public onlyKeeper {
+        require(isPreSale == true, "Pre-sale was ended");
+        openSale += numberOfPresales;
         _mintGroup(msg.sender, numberOfPresales);
+        isPreSale = false;
     }
 
-    function startSale() public {
-        openSale = true;
+    function startSale(uint numberOfSales, uint256 feeInc) public onlyKeeper {
+        require(openSale + numberOfSales <= maxPeon, "Exceeded the number of max peon");
+        openSale += numberOfSales;
+        mintFee += feeInc;
     }
 
     function bid(uint peonId) public payable {
-        require(openSale == true, "Sale was not started");
+        require(mintedPeon < openSale, "Sale was not started");
         require(bids[peonId][msg.sender] == 0, "You already have a bid for peon. Please cancel if you would like to bid another price");
         require(ownerOf(peonId) != msg.sender, "You cannot bid your own peon");
         bids[peonId][msg.sender] = msg.value;
@@ -66,7 +74,7 @@ contract Peon is ERC721 {
     }
 
     function cancel(uint peonId) public payable {
-        require(openSale == true, "Sale was not started");
+        require(mintedPeon < openSale, "Sale was not started");
         require(bids[peonId][msg.sender] != 0, "You don't have any bid for this peon");
         Address.sendValue(payable(msg.sender), bids[peonId][msg.sender]);
         delete bids[peonId][msg.sender];
@@ -75,7 +83,7 @@ contract Peon is ERC721 {
     }
 
     function accept(uint peonId, address bidder) public payable {
-        require(openSale == true, "Sale was not started");
+        require(mintedPeon < openSale, "Sale was not started");
         address currentOwner = ownerOf(peonId);
         require(currentOwner == msg.sender, "You are not owner of this peon");
         require(bids[peonId][bidder] > 0, "Could not find bidder address");
@@ -99,40 +107,38 @@ contract Peon is ERC721 {
     }
 
     function mint(uint numberOfPeons) public payable {
-        require(openSale == true, "Sale was not started");
-        require(numberOfPeons <= maxBuy, "Exceeded max token purchase");
+        require(numberOfPeons <= 10, "Exceeded max token purchase");
         require(mintedPeon + numberOfPeons <= maxPeon, "Purchase would exceed max supply of tokens");
         require(mintFee * numberOfPeons <= msg.value, "Ether value sent is not correct");
+        require(mintedPeon + numberOfPeons <= openSale, "Sale was not started");
         _mintGroup(msg.sender, numberOfPeons);
         funded += numberOfPeons;
     }
 
-
-
     function randomEfficiency() private view returns (uint) {
         uint score = uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp, mintedPeon))) % maxPeon;
         if (score < maxPeon / 2) {
-            return 50;
+            return 50; // level 0 ==> 100%
         } else if (score < maxPeon * 10 / 15) {
-            return 75;
+            return 75; // 50%
         } else if (score < maxPeon * 10**2 / 125) {
-            return 112;
+            return 112; // 25%
         } else if (score < maxPeon * 10**3 / 1125) {
-            return 168;
+            return 168; // 12.5%
         } else if (score < maxPeon * 10**4 / 10625) {
-            return 253;
+            return 253; // 6.25%
         } else if (score < maxPeon * 10**5 / 103125) {
-            return 379;
+            return 379; // 3.12%
         } else if (score < maxPeon * 10**6 / 1015625) {
-            return 569;
+            return 569; // 1.56%
         } else if (score < maxPeon * 10**7 / 10078125) {
-            return 854;
+            return 854; // 0.78%
         } else if (score < maxPeon * 10**8 / 100390625) {
-            return 1281;
+            return 1281; // 0.39%
         } else if (score < maxPeon * 10**9 / 1001953125 ) {
-            return 1922;
+            return 1922; // 0.19%
         } else {
-            return 2883;
+            return 2883; // level 10 ==> 0.09%
         }
     }
 
@@ -146,9 +152,8 @@ contract Peon is ERC721 {
         return numberOfBlocks * 10**pow * efficiency[peonId] / 100;
     }
 
-    function withdraw() public payable {
-        require(openSale == true, "Sale was not started");
-        require(treasuryKeeperAddress == msg.sender, "You are not treasury keeper");
+    function withdraw() public payable onlyKeeper {
+        require(mintedPeon < openSale, "Sale was not started");
         require(funded > 0, "no fund to withdraw");
         uint256 withdrawable = funded * mintFee;
         Address.sendValue(payable(treasuryKeeperAddress), withdrawable);
@@ -163,13 +168,12 @@ contract Peon is ERC721 {
         if (from != address(0)) _harvest(tokenId, from);
     }
 
-    function withdrawAmount() public view returns (uint256){
-        require(treasuryKeeperAddress == msg.sender, "You are not treasury keeper");
+    function withdrawAmount() public view onlyKeeper returns (uint256){
         return funded * mintFee;
     }
 
     function harvest(uint peonId) public {
-        require(openSale == true, "Sale was not started");
+        require(mintedPeon < openSale, "Sale was not started");
         address sender = msg.sender;
         require(ownerOf(peonId) == sender, "Token is not owned by sender");
         _harvest(peonId, sender);

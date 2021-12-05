@@ -353,6 +353,19 @@ export const peonAbi = `[
     },
     {
       "inputs": [],
+      "name": "isPreSale",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "maxBuy",
       "outputs": [
         {
@@ -437,6 +450,19 @@ export const peonAbi = `[
           "internalType": "string",
           "name": "",
           "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "openSale",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -544,7 +570,18 @@ export const peonAbi = `[
       "type": "function"
     },
     {
-      "inputs": [],
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "numberOfSales",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeInc",
+          "type": "uint256"
+        }
+      ],
       "name": "startSale",
       "outputs": [],
       "stateMutability": "nonpayable",
@@ -659,7 +696,7 @@ export const peonAbi = `[
     }
   ]`;
 
-export const pGold = `[
+export const pGoldAbi = `[
     {
       "inputs": [
         {
