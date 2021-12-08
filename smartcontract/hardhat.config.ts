@@ -39,8 +39,6 @@ const config: HardhatUserConfig = {
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
-    token: "BNB",
-    gasPriceApi: "https://api.bscscan.com/api?module=proxy&action=eth_gasPrice",
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,

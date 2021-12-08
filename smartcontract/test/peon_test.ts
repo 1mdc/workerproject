@@ -33,7 +33,12 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 20000);
+      .deploy(
+        admin.address,
+        mintableErc20.address,
+        20000,
+        ethers.utils.parseEther("0.042")
+      );
     await peon.deployed();
     await peon.preSale(1);
     await mintableErc20.setPeonAddress(peon.address);
@@ -51,7 +56,12 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     const peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 20000);
+      .deploy(
+        admin.address,
+        mintableErc20.address,
+        20000,
+        ethers.utils.parseEther("0.042")
+      );
     await peon.deployed();
     await peon.preSale(2);
     await mintableErc20.setPeonAddress(peon.address);
@@ -80,7 +90,12 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     const peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 2);
+      .deploy(
+        admin.address,
+        mintableErc20.address,
+        2,
+        ethers.utils.parseEther("0.042")
+      );
     await peon.deployed();
     await peon.preSale(1);
     await mintableErc20.setPeonAddress(peon.address);
@@ -97,11 +112,13 @@ describe("peon contract", function () {
   });
   it("mint multiple peons", async function () {
     await peon.connect(admin).startSale(8, 0);
-    await peon.connect(user1).mint(10, {
-      value: ethers.utils.parseEther((feePerPeon * 10).toString()),
+    await peon.connect(user1).mint(9, {
+      value: ethers.utils.parseEther((feePerPeon * 9).toString()),
     });
-    expect(await peon.withdrawAmount()).to.equal(BigInt("420000000000000000"));
-    expect(await peon.mintedPeon()).to.equal(11);
+    expect(await peon.withdrawAmount()).to.equal(
+      BigNumber.from(378).mul(BigNumber.from(10).pow(15)).toBigInt()
+    );
+    expect(await peon.mintedPeon()).to.equal(10);
   });
   it("should not allow mint too many token at a time", async function () {
     await expect(
@@ -236,7 +253,12 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     const peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 20000);
+      .deploy(
+        admin.address,
+        mintableErc20.address,
+        20000,
+        ethers.utils.parseEther("0.042")
+      );
     await peon.deployed();
     await peon.preSale(2);
     await mintableErc20.setPeonAddress(peon.address);
@@ -374,7 +396,12 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     const peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 2000);
+      .deploy(
+        admin.address,
+        mintableErc20.address,
+        2000,
+        ethers.utils.parseEther("0.042")
+      );
     await peon.deployed();
     await peon.preSale(1);
     await mintableErc20.setPeonAddress(peon.address);
@@ -391,7 +418,12 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     const peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 2000);
+      .deploy(
+        admin.address,
+        mintableErc20.address,
+        2000,
+        ethers.utils.parseEther("0.042")
+      );
     await peon.deployed();
     await peon.preSale(1);
     await mintableErc20.setPeonAddress(peon.address);
@@ -406,7 +438,12 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     const peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 2000);
+      .deploy(
+        admin.address,
+        mintableErc20.address,
+        2000,
+        ethers.utils.parseEther("0.042")
+      );
     await peon.deployed();
     await peon.connect(admin).preSale(1);
     await mintableErc20.setPeonAddress(peon.address);
@@ -414,9 +451,15 @@ describe("peon contract", function () {
       "Sale was not started"
     );
   });
-  it("presale can be called only once", async function () {
+  it("presale cannot be called after ended", async function () {
+    await peon.connect(admin).endPresale();
     await expect(peon.connect(admin).preSale(1)).to.be.revertedWith(
       "Pre-sale was ended"
+    );
+  });
+  it("only keeper can complete a presale", async function () {
+    await expect(peon.connect(user1).endPresale()).to.be.revertedWith(
+      "You are not treasury keeper"
     );
   });
   it("can only admin do presale", async function () {
@@ -426,7 +469,12 @@ describe("peon contract", function () {
     await mintableErc20.deployed();
     const peon = await peonFactory
       .connect(admin)
-      .deploy(admin.address, mintableErc20.address, 2000);
+      .deploy(
+        admin.address,
+        mintableErc20.address,
+        2000,
+        ethers.utils.parseEther("0.042")
+      );
     await peon.deployed();
     await expect(peon.connect(user1).preSale(1)).to.be.revertedWith(
       "You are not treasury keeper"

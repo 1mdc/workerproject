@@ -1,9 +1,15 @@
 import React, {useEffect, useState} from 'react';
 import {BigNumber, ethers} from "ethers";
 import {JsonRpcSigner} from "@ethersproject/providers/src.ts/json-rpc-provider";
-import {pGoldAddress} from "./addresses";
+import {adminAddress} from "./config";
+import {useForm} from "react-hook-form";
 
-function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.Contract, pGoldContract: ethers.Contract }) {
+interface SaleForm {
+    numberOfPeons: number;
+    feeIncrease: number;
+}
+
+function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.Contract, pGoldContract: ethers.Contract, assetToken: string }) {
     const [connected, setConnected] = useState(false);
     const [error, setError] = useState("");
     const [userAddress, setUserAddress] = useState("");
@@ -12,17 +18,78 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
     const [signer, setSigner] = useState<JsonRpcSigner>();
     const [sale, setSale] = useState(0);
     const [sold, setSold] = useState(0);
-    const [cost, setCost] = useState<BigNumber>(BigNumber.from(0));
     const [maxPeon, setMaxPeon] = useState(0);
-    const fee = ethers.utils.parseEther("0.042");
+    const [fee, setFee] = useState<BigNumber>(BigNumber.from(0));
+    const [preSale, setPresale] = useState(false);
+
+    const saleForm = useForm<SaleForm>();
+
+    const transactionCallback = (transaction: any) => {
+        setError(`wait for transaction ${transaction.hash}`)
+        props.web3
+            .waitForTransaction(transaction.hash, 1, 50)
+            .then(() => {
+                updateStats()
+                setError(``)
+            })
+            .catch(err => setError(`Transaction ${transaction.hash} timeout`))
+    }
+
+    const onSubmitMint = (e: React.FormEvent<HTMLFormElement>) => {
+        setError('');
+        if (signer) {
+            props.peonContract.connect(signer).mint(1, {
+                value: fee.mul(1),
+                gasLimit: BigNumber.from(220_000).toBigInt()
+            }).then(transactionCallback).catch((err: any) => setError(err));
+        } else {
+            setError('Account not found');
+        }
+        e.preventDefault();
+    }
+
+    const onSubmitPresale = (e: React.FormEvent<HTMLFormElement>) => {
+        setError('');
+        if (signer) {
+            props.peonContract.connect(signer).preSale(10, {
+                gasLimit: BigNumber.from(5_000_000).toBigInt()
+            }).then(transactionCallback).catch((err: any) => setError(err));
+        } else {
+            setError('Account not found');
+        }
+        e.preventDefault();
+    }
+
+    const onSubmitCompletePresale = (e: React.FormEvent<HTMLFormElement>) => {
+        setError('');
+        if (signer) {
+            props.peonContract.connect(signer).endPresale({
+                gasLimit: BigNumber.from(50_000).toBigInt()
+            }).then(transactionCallback).catch((err: any) => setError(err));
+        } else {
+            setError('Account not found');
+        }
+        e.preventDefault();
+    }
+
+    const onSubmitSale = (data: SaleForm) => {
+        setError('');
+        if (signer) {
+            props.peonContract.connect(signer).startSale(data.numberOfPeons, ethers.utils.parseEther(data.feeIncrease.toString()), {
+                gasLimit: BigNumber.from(120_000).toBigInt()
+            }).then(transactionCallback).catch((err: any) => setError(err));
+        } else {
+            setError('Account not found');
+        }
+    }
 
     const toFloat = (big: BigNumber) => big.div(100000000000).toNumber() / 10000000
 
     useEffect(() => {
-        updateBalance();
+        updateStats();
     }, [userAddress])
 
-    const updateBalance = () => {
+    const updateStats = () => {
         if (userAddress !== '') {
             props.web3.getBalance(userAddress).then(data => {
                 if (data) setBalance(BigNumber.from(data.toBigInt().toString()));
@@ -40,7 +107,10 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
                 if (data) setMaxPeon(BigNumber.from(data.toBigInt().toString()).toNumber())
             })
             props.peonContract.mintFee().then((data: any) => {
-                if (data) setCost(BigNumber.from(data.toBigInt().toString()))
+                if (data) setFee(BigNumber.from(data.toBigInt().toString()))
+            })
+            props.peonContract.isPreSale().then((data: any) => {
+                if (data) setPresale(data)
             })
         }
     }
@@ -58,36 +128,39 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
             })
     }
 
-    const mint = () => {
-        setError('');
-        if (signer) {
-            props.peonContract.estimateGas.mint(1, {value: fee}).then(estimate => {
-                try {
-                    const connected = props.peonContract.connect(signer);
-                    connected.mint(1, {
-                        value: fee,
-                        gasLimit: estimate.toBigInt()
-                    }).then(() => updateBalance()).catch((err: any) => setError(err));
-                } catch (err: any) {
-                    setError(err)
-                }
-            }).catch((err: any) => setError(err))
-        } else {
-            setError('Account not found');
-        }
-    }
-
     const connectedComponent = () => <div>
-        <div>
-            <button onClick={mint}>Mint new peon</button>
-        </div>
-        <div>Balance: {toFloat(balance)} ETH</div>
-        <div>pGold: {toFloat(goldBalance)} pGold</div>
+        <form onSubmit={onSubmitMint}>
+            <input type="submit" value="Mint new peon"/>
+        </form>
+        <div>Balance: {toFloat(balance)}{props.assetToken}</div>
+        <div>You have {toFloat(goldBalance)} pGold</div>
     </div>;
 
     const currentSaleOpen = () => <div>
-        {sale - sold} peons left for sale. Cost is {toFloat(cost)}ETH per peon. {sold} peons have been sold so far.
+        {sale - sold} peons left for sale. Cost is {toFloat(fee)}{props.assetToken} per peon. {sold} peons have been
+        sold so far.
         maximum {maxPeon} peons.
+    </div>
+    const adminPanel = () => <div>
+        {preSale ? <div>
+            <form onSubmit={onSubmitPresale}>
+                <div>
+                    <input type="submit" value="Pre-sale"/>
+                </div>
+            </form>
+            <form onSubmit={onSubmitCompletePresale}>
+                <div>
+                    <input type="submit" value="End Pre-sale"/>
+                </div>
+            </form></div>
+            : <div>presale is completed</div>}
+        <form onSubmit={saleForm.handleSubmit(onSubmitSale)}>
+            <div>
+                Number of sales: <input type="number" {...saleForm.register("numberOfPeons")} />
+                Fee Increase: <input type="number" {...saleForm.register("feeIncrease")} step="any"/>
+                <input type="submit" value="Start Sale"/>
+            </div>
+        </form>
     </div>
     const userMintedPeons = () => <div></div>
     const allMintedPeons = () => <div></div>
@@ -97,8 +170,9 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
             {error !== '' ? <div>{error}</div> : null}
             {connected ? <div>connected: {userAddress}</div> :
                 <button onClick={onClickConnectWallet}>Connect wallet</button>}
-            {connected ? connectedComponent() : <div>Connect wallet to mint peons</div>}
+            {connected && fee.gt(0) ? connectedComponent() : <div>Connect wallet to mint peons</div>}
             {connected ? currentSaleOpen() : null}
+            {connected && userAddress.toLowerCase() === adminAddress.toLowerCase() ? adminPanel() : null}
             {connected ? userMintedPeons() : null}
             {connected ? allMintedPeons() : null}
         </div>

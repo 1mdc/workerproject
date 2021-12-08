@@ -26,14 +26,15 @@ contract Peon is ERC721 {
     mapping(uint => mapping(address => uint256)) bids;
     uint public mintedPeon = 0;
     uint public maxPeon;
-    uint256 public mintFee = 0.042 * 10**18;
+    uint256 public mintFee;
     uint funded = 0;
     uint public openSale = 0;
+    uint public maxPerMint = 9;
     bool public isPreSale = true;
 
-    event AcceptBidEvent(uint indexed peonId, address indexed owner);
-    event BidEvent(uint indexed peonId, address indexed owner);
-    event CancelEvent(uint indexed peonId, address indexed owner);
+    event AcceptBidEvent(uint indexed peonId, address indexed buyer);
+    event BidEvent(uint indexed peonId, address indexed buyer, uint256 indexed amount);
+    event CancelEvent(uint indexed peonId, address indexed buyer);
 
     modifier onlyKeeper {
         require(msg.sender == treasuryKeeperAddress, "You are not treasury keeper");
@@ -42,16 +43,22 @@ contract Peon is ERC721 {
 
     constructor(address _treasuryKeeperAddress,
         address _mineralTokenAddress,
-        uint _maxPeon) ERC721("Peon", "PEON") {
+        uint _maxPeon,
+        uint256 _mintFee) ERC721("Peon", "PEON") {
         treasuryKeeperAddress = _treasuryKeeperAddress;
         mineralTokenAddress = _mineralTokenAddress;
         maxPeon = _maxPeon;
+        mintFee = _mintFee;
     }
 
     function preSale(uint numberOfPresales) public onlyKeeper {
         require(isPreSale == true, "Pre-sale was ended");
         openSale += numberOfPresales;
         _mintGroup(msg.sender, numberOfPresales);
+    }
+
+    function endPresale() public onlyKeeper {
+        require(isPreSale == true, "Pre-sale was ended");
         isPreSale = false;
     }
 
@@ -66,7 +73,7 @@ contract Peon is ERC721 {
         require(bids[peonId][msg.sender] == 0, "You already have a bid for peon. Please cancel if you would like to bid another price");
         require(ownerOf(peonId) != msg.sender, "You cannot bid your own peon");
         bids[peonId][msg.sender] = msg.value;
-        emit BidEvent(peonId, msg.sender);
+        emit BidEvent(peonId, msg.sender, msg.value);
     }
 
     function getBid(uint peonId, address bidder) public view returns (uint256) {
@@ -90,7 +97,7 @@ contract Peon is ERC721 {
         Address.sendValue(payable(currentOwner), bids[peonId][bidder]);
         safeTransferFrom(currentOwner, bidder, peonId);
         delete bids[peonId][bidder];
-        emit AcceptBidEvent(peonId, msg.sender);
+        emit AcceptBidEvent(peonId, bidder);
     }
 
     function _mintPeon(address sender, uint peonId) private {
@@ -107,7 +114,7 @@ contract Peon is ERC721 {
     }
 
     function mint(uint numberOfPeons) public payable {
-        require(numberOfPeons <= 10, "Exceeded max token purchase");
+        require(numberOfPeons <= maxPerMint, "Exceeded max token purchase");
         require(mintedPeon + numberOfPeons <= maxPeon, "Purchase would exceed max supply of tokens");
         require(mintFee * numberOfPeons <= msg.value, "Ether value sent is not correct");
         require(mintedPeon + numberOfPeons <= openSale, "Sale was not started");
@@ -180,7 +187,8 @@ contract Peon is ERC721 {
     }
 
     function _harvest(uint peonId, address receiver) private {
-        IMintableERC20(mineralTokenAddress).mint(receiver, harvestableAmount(peonId));
+        uint256 amount = harvestableAmount(peonId);
+        IMintableERC20(mineralTokenAddress).mint(receiver, amount);
         lastHarvestedBlock[peonId] = block.number;
     }
 }

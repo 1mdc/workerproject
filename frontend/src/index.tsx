@@ -4,7 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {ethers} from "ethers";
-import {peonAddress, pGoldAddress} from "./addresses";
+import {assetToken, peonAddress, pGoldAddress} from "./config";
 import {peonAbi, pGoldAbi} from "./abis";
 
 const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -13,7 +13,7 @@ const pGoldContract = new ethers.Contract(pGoldAddress, pGoldAbi, provider);
 
 ReactDOM.render(
   <React.StrictMode>
-    <App web3={provider} peonContract={peonContract} pGoldContract={pGoldContract} />
+    <App web3={provider} peonContract={peonContract} pGoldContract={pGoldContract} assetToken={assetToken} />
   </React.StrictMode>,
   document.getElementById('root')
 );

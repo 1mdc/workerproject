@@ -14,7 +14,12 @@ async function main() {
 
   const peon = await peonFactory
     .connect(deployer)
-    .deploy(admin, mintableErc20.address, 20000);
+    .deploy(
+      admin,
+      mintableErc20.address,
+      20000,
+      ethers.utils.parseEther("0.1")
+    );
   await peon.deployed();
   await mintableErc20.setPeonAddress(peon.address);
 

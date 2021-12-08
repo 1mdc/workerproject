@@ -15,6 +15,11 @@ export const peonAbi = `[
           "internalType": "uint256",
           "name": "_maxPeon",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_mintFee",
+          "type": "uint256"
         }
       ],
       "stateMutability": "nonpayable",
@@ -32,7 +37,7 @@ export const peonAbi = `[
         {
           "indexed": true,
           "internalType": "address",
-          "name": "owner",
+          "name": "buyer",
           "type": "address"
         }
       ],
@@ -101,8 +106,14 @@ export const peonAbi = `[
         {
           "indexed": true,
           "internalType": "address",
-          "name": "owner",
+          "name": "buyer",
           "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
         }
       ],
       "name": "BidEvent",
@@ -120,7 +131,7 @@ export const peonAbi = `[
         {
           "indexed": true,
           "internalType": "address",
-          "name": "owner",
+          "name": "buyer",
           "type": "address"
         }
       ],
@@ -253,6 +264,13 @@ export const peonAbi = `[
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "endPresale",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -366,7 +384,7 @@ export const peonAbi = `[
     },
     {
       "inputs": [],
-      "name": "maxBuy",
+      "name": "maxPeon",
       "outputs": [
         {
           "internalType": "uint256",
@@ -379,7 +397,7 @@ export const peonAbi = `[
     },
     {
       "inputs": [],
-      "name": "maxPeon",
+      "name": "maxPerMint",
       "outputs": [
         {
           "internalType": "uint256",
