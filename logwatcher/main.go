@@ -84,7 +84,7 @@ func watchTheLog(db *gorm.DB, client *ethclient.Client, addressToListen string) 
 	logrus.Infof("watching transferEventHash: %s", transferEventHash)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/peons/count", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/count-peons", func(w http.ResponseWriter, r *http.Request) {
 		count, err := PeonCount(db)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -92,7 +92,7 @@ func watchTheLog(db *gorm.DB, client *ethclient.Client, addressToListen string) 
 		} else {
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(&PeonCountDto{
-				peons: count,
+				Peons: count,
 			})
 		}
 	})
@@ -516,31 +516,31 @@ type PurchaseTable struct {
 }
 
 type Peon struct {
-	PeonId        uint
-	Owner         string
-	Transfers     []PeonTransfer
-	Purchases     []PeonPurchase
-	Bids          []PeonBid
-	TransferredAt time.Time
-	CreatedAt     time.Time
+	PeonId        uint           `json:"peon_id"`
+	Owner         string         `json:"owner"`
+	Transfers     []PeonTransfer `json:"transfers"`
+	Purchases     []PeonPurchase `json:"purchases"`
+	Bids          []PeonBid      `json:"bids"`
+	TransferredAt time.Time      `json:"transferred_at"`
+	CreatedAt     time.Time      `json:"created_at"`
 }
 
 type PeonTransfer struct {
-	From string
-	To   string
+	From string `json:"from"`
+	To   string `json:"to"`
 }
 
 type PeonPurchase struct {
-	From  string
-	To    string
-	Value uint64
+	From  string `json:"from"`
+	To    string `json:"to"`
+	Value uint64 `json:"value"`
 }
 
 type PeonBid struct {
-	Buyer string
-	Value uint64
+	Buyer string `json:"buyer"`
+	Value uint64 `json:"value"`
 }
 
 type PeonCountDto struct {
-	peons uint
+	Peons uint `json:"peons"`
 }

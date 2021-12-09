@@ -3,6 +3,7 @@ import {BigNumber, ethers} from "ethers";
 import {JsonRpcSigner} from "@ethersproject/providers/src.ts/json-rpc-provider";
 import {adminAddress} from "./config";
 import {useForm} from "react-hook-form";
+import {getLastMintedPeons, getOwnerPeons, getPeonDetail, Peon} from "./apis";
 
 interface SaleForm {
     numberOfPeons: number;
@@ -21,6 +22,8 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
     const [maxPeon, setMaxPeon] = useState(0);
     const [fee, setFee] = useState<BigNumber>(BigNumber.from(0));
     const [preSale, setPresale] = useState(false);
+    const [lastMintedPeons, setLastMintedPeons] = useState<Peon[]>()
+    const [userPeons, setUserPeons] = useState<Peon[]>()
 
     const saleForm = useForm<SaleForm>();
 
@@ -112,6 +115,14 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
             props.peonContract.isPreSale().then((data: any) => {
                 if (data) setPresale(data)
             })
+            getLastMintedPeons()
+                .then(peonIds => Promise.all(peonIds.map(peonId => getPeonDetail(peonId))))
+                .then(peons => setLastMintedPeons(peons))
+                .catch(err => console.log(err))
+            getOwnerPeons(userAddress)
+                .then(peonIds => Promise.all(peonIds.map(peonId => getPeonDetail(peonId))))
+                .then(peons => setUserPeons(peons))
+                .catch(err => console.log(err))
         }
     }
 
@@ -175,8 +186,28 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
             {connected && userAddress.toLowerCase() === adminAddress.toLowerCase() ? adminPanel() : null}
             {connected ? userMintedPeons() : null}
             {connected ? allMintedPeons() : null}
+            <div>
+                <h4>Your Peons</h4>
+                {userPeons?.map(peon => <PeonCard peon={peon} userAddress={userAddress} />)}
+            </div>
+            <div>
+                <h4>Last Minted Peons</h4>
+                {lastMintedPeons?.map(peon => <PeonCard peon={peon} userAddress={userAddress} />)}
+            </div>
         </div>
     );
+}
+
+function PeonCard(props: {peon: Peon, userAddress: string}) {
+    return <div>
+        <p>Peon #{props.peon.peon_id}</p>
+        <p>Owner {props.peon.owner}</p>
+        <p>Created at {props.peon.created_at}</p>
+        {props.peon.owner !== props.userAddress ? <form>Offer: <input type="text" /> <input type="submit" value="Offer" /></form> : null}
+        <p>Bids {props.peon.bids.map(bid => <form>bid: {bid.buyer} value: {bid.value} {props.peon.owner === props.userAddress ? <input type="submit" value="Accept Offer" /> : null}</form>)}</p>
+        <p>Transfers {props.peon.transfers.map(transfer => <div>from {transfer.from} to {transfer.to}</div>)}</p>
+        <p>Transfers {props.peon.purchases.map(purchase => <div>from {purchase.from} to {purchase.to} price {purchase.value}</div>)}</p>
+    </div>
 }
 
 export default App;
