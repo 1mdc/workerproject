@@ -143,6 +143,25 @@ export const peonAbi = `[
       "inputs": [
         {
           "indexed": true,
+          "internalType": "uint256",
+          "name": "peonId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "efficiency",
+          "type": "uint256"
+        }
+      ],
+      "name": "PeonMintedEvent",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
           "internalType": "address",
           "name": "from",
           "type": "address"

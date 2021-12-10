@@ -1,12 +1,12 @@
-import {Axios} from "axios";
+import axios from "axios";
 
 export interface Peon {
     peon_id: number;
     owner: string;
+    efficiency: BigInt;
     transfers: PeonTransfer[];
     purchases: PeonPurchase[];
     bids: PeonBid[];
-    transferred_at: Date;
     created_at: Date;
 }
 
@@ -30,7 +30,7 @@ interface PeonCountDto {
     peons: number;
 }
 
-const client = new Axios();
+const client = axios
 
 export function getPeonCount(): Promise<number> {
     return client.get<PeonCountDto>("http://localhost:8080/count-peons").then(resp => resp.data.peons);

@@ -32,6 +32,7 @@ contract Peon is ERC721 {
     uint public maxPerMint = 9;
     bool public isPreSale = true;
 
+    event PeonMintedEvent(uint indexed peonId, uint indexed efficiency);
     event AcceptBidEvent(uint indexed peonId, address indexed buyer);
     event BidEvent(uint indexed peonId, address indexed buyer, uint256 indexed amount);
     event CancelEvent(uint indexed peonId, address indexed buyer);
@@ -105,6 +106,7 @@ contract Peon is ERC721 {
         efficiency[peonId] = randomEfficiency();
         lastHarvestedBlock[peonId] = block.number;
         mintedPeon += 1;
+        emit PeonMintedEvent(peonId, efficiency[peonId]);
     }
 
     function _mintGroup(address receiver, uint numberOfPeons) private {

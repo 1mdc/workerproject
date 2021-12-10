@@ -32,7 +32,7 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
         props.web3
             .waitForTransaction(transaction.hash, 1, 50)
             .then(() => {
-                updateStats()
+                setTimeout(() => updateStats(), 4_000)
                 setError(``)
             })
             .catch(err => setError(`Transaction ${transaction.hash} timeout`))
@@ -188,11 +188,11 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
             {connected ? allMintedPeons() : null}
             <div>
                 <h4>Your Peons</h4>
-                {userPeons?.map(peon => <PeonCard peon={peon} userAddress={userAddress} />)}
+                {userPeons?.map(peon => <PeonCard key={`userpeon-${peon.peon_id}`} peon={peon} userAddress={userAddress} />)}
             </div>
             <div>
                 <h4>Last Minted Peons</h4>
-                {lastMintedPeons?.map(peon => <PeonCard peon={peon} userAddress={userAddress} />)}
+                {lastMintedPeons?.map(peon => <PeonCard key={`mintedpeon-${peon.peon_id}`} peon={peon} userAddress={userAddress} />)}
             </div>
         </div>
     );
@@ -200,13 +200,14 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
 
 function PeonCard(props: {peon: Peon, userAddress: string}) {
     return <div>
-        <p>Peon #{props.peon.peon_id}</p>
-        <p>Owner {props.peon.owner}</p>
-        <p>Created at {props.peon.created_at}</p>
-        {props.peon.owner !== props.userAddress ? <form>Offer: <input type="text" /> <input type="submit" value="Offer" /></form> : null}
-        <p>Bids {props.peon.bids.map(bid => <form>bid: {bid.buyer} value: {bid.value} {props.peon.owner === props.userAddress ? <input type="submit" value="Accept Offer" /> : null}</form>)}</p>
-        <p>Transfers {props.peon.transfers.map(transfer => <div>from {transfer.from} to {transfer.to}</div>)}</p>
-        <p>Transfers {props.peon.purchases.map(purchase => <div>from {purchase.from} to {purchase.to} price {purchase.value}</div>)}</p>
+        <div>Peon #{props.peon.peon_id}</div>
+        <div>Owner {props.peon.owner}</div>
+        <div>Created at {props.peon.created_at}</div>
+        <div>Eff {props.peon.efficiency}</div>
+        {props.peon.owner.toLowerCase() !== props.userAddress.toLowerCase() ? <form>Offer: <input type="text" /> <input type="submit" value="Offer" /></form> : null}
+        <div>Bids {props.peon.bids.map(bid => <form key={`bid-${bid.buyer}`}>bid: {bid.buyer} value: {bid.value} {props.peon.owner.toLowerCase() === props.userAddress.toLowerCase() ? <input type="submit" value="Accept Offer" /> : null}</form>)}</div>
+        <div>Transfers {props.peon.transfers.map(transfer => <div key={`transfer-${transfer.to}`}>from {transfer.from} to {transfer.to}</div>)}</div>
+        <div>Purchases {props.peon.purchases.map(purchase => <div key={`purchase-${purchase.to}`}>from {purchase.from} to {purchase.to} price {purchase.value}</div>)}</div>
     </div>
 }
 
