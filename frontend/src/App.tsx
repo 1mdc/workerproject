@@ -1,89 +1,80 @@
-import React, {useEffect, useState} from 'react';
-import {BigNumber, ethers} from "ethers";
+import React, {useEffect, useRef, useState} from 'react';
+import {BigNumber, Transaction} from "ethers";
 import {JsonRpcSigner} from "@ethersproject/providers/src.ts/json-rpc-provider";
 import {adminAddress} from "./config";
 import {useForm} from "react-hook-form";
-import {getLastMintedPeons, getOwnerPeons, getPeonDetail, Peon} from "./apis";
+import {getBiddings, getLastMintedPeons, getOwnerPeons, getPeonDetail, Peon} from "./apis";
+import {
+    acceptBid,
+    callPresale, cancelBid, connectWallet, endPresale,
+    getEthBalance,
+    getMaxPeon, getSigner,
+    getTokenBalance,
+    isPreSale, makeBid, mint,
+    mintedPeon,
+    mintFee,
+    openSale, startSale, waitTransaction
+} from "./contract";
 
 interface SaleForm {
     numberOfPeons: number;
     feeIncrease: number;
 }
 
-function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.Contract, pGoldContract: ethers.Contract, assetToken: string }) {
+interface BidForm {
+    amount: number;
+}
+
+function App(props: { assetToken: string, signer: JsonRpcSigner }) {
     const [connected, setConnected] = useState(false);
     const [error, setError] = useState("");
     const [userAddress, setUserAddress] = useState("");
     const [balance, setBalance] = useState<BigNumber>(BigNumber.from(0.0));
     const [goldBalance, setGoldBalance] = useState<BigNumber>(BigNumber.from(0.0));
-    const [signer, setSigner] = useState<JsonRpcSigner>();
     const [sale, setSale] = useState(0);
     const [sold, setSold] = useState(0);
     const [maxPeon, setMaxPeon] = useState(0);
     const [fee, setFee] = useState<BigNumber>(BigNumber.from(0));
-    const [preSale, setPresale] = useState(false);
-    const [lastMintedPeons, setLastMintedPeons] = useState<Peon[]>()
-    const [userPeons, setUserPeons] = useState<Peon[]>()
+    const [preSale, setPresale] = useState<Boolean>(false);
+    const [lastMintedPeons, setLastMintedPeons] = useState<number[]>()
+    const [userPeons, setUserPeons] = useState<number[]>()
+    const [userBiddings, setUserBiddings] = useState<number[]>()
 
     const saleForm = useForm<SaleForm>();
 
-    const transactionCallback = (transaction: any) => {
+    const transactionCallback = (transaction: Transaction) => {
         setError(`wait for transaction ${transaction.hash}`)
-        props.web3
-            .waitForTransaction(transaction.hash, 1, 50)
-            .then(() => {
-                setTimeout(() => updateStats(), 4_000)
-                setError(``)
-            })
-            .catch(err => setError(`Transaction ${transaction.hash} timeout`))
+        if (transaction.hash) {
+            waitTransaction(transaction.hash)
+                .then(() => {
+                    setTimeout(() => updateStats(), 4_000)
+                    setError(``)
+                })
+                .catch(err => setError(`Transaction ${transaction.hash} timeout`))
+        }
     }
 
     const onSubmitMint = (e: React.FormEvent<HTMLFormElement>) => {
         setError('');
-        if (signer) {
-            props.peonContract.connect(signer).mint(1, {
-                value: fee.mul(1),
-                gasLimit: BigNumber.from(220_000).toBigInt()
-            }).then(transactionCallback).catch((err: any) => setError(err));
-        } else {
-            setError('Account not found');
-        }
+        mint(props.signer, fee).then(transactionCallback).catch((err: any) => setError(err));
         e.preventDefault();
     }
 
     const onSubmitPresale = (e: React.FormEvent<HTMLFormElement>) => {
         setError('');
-        if (signer) {
-            props.peonContract.connect(signer).preSale(10, {
-                gasLimit: BigNumber.from(5_000_000).toBigInt()
-            }).then(transactionCallback).catch((err: any) => setError(err));
-        } else {
-            setError('Account not found');
-        }
+        callPresale(props.signer).then(transactionCallback).catch((err: any) => setError(err));
         e.preventDefault();
     }
 
     const onSubmitCompletePresale = (e: React.FormEvent<HTMLFormElement>) => {
         setError('');
-        if (signer) {
-            props.peonContract.connect(signer).endPresale({
-                gasLimit: BigNumber.from(50_000).toBigInt()
-            }).then(transactionCallback).catch((err: any) => setError(err));
-        } else {
-            setError('Account not found');
-        }
+        endPresale(props.signer).then(transactionCallback).catch((err: any) => setError(err));
         e.preventDefault();
     }
 
     const onSubmitSale = (data: SaleForm) => {
         setError('');
-        if (signer) {
-            props.peonContract.connect(signer).startSale(data.numberOfPeons, ethers.utils.parseEther(data.feeIncrease.toString()), {
-                gasLimit: BigNumber.from(120_000).toBigInt()
-            }).then(transactionCallback).catch((err: any) => setError(err));
-        } else {
-            setError('Account not found');
-        }
+        startSale(props.signer, data.numberOfPeons, data.feeIncrease).then(transactionCallback).catch((err: any) => setError(err));
     }
 
     const toFloat = (big: BigNumber) => big.div(100000000000).toNumber() / 10000000
@@ -91,52 +82,35 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
     useEffect(() => {
         updateStats();
     }, [userAddress])
-
+//0xaba11c5dfdb797eb6f7328f5f70a9b390c19e34a3927e10f1925839d442c4293
     const updateStats = () => {
         if (userAddress !== '') {
-            props.web3.getBalance(userAddress).then(data => {
-                if (data) setBalance(BigNumber.from(data.toBigInt().toString()));
-            })
-            props.pGoldContract.balanceOf(userAddress).then((data: any) => {
-                if (data) setGoldBalance(BigNumber.from(data.toBigInt().toString()))
-            })
-            props.peonContract.openSale().then((data: any) => {
-                if (data) setSale(BigNumber.from(data.toBigInt().toString()).toNumber())
-            })
-            props.peonContract.mintedPeon().then((data: any) => {
-                if (data) setSold(BigNumber.from(data.toBigInt().toString()).toNumber())
-            })
-            props.peonContract.maxPeon().then((data: any) => {
-                if (data) setMaxPeon(BigNumber.from(data.toBigInt().toString()).toNumber())
-            })
-            props.peonContract.mintFee().then((data: any) => {
-                if (data) setFee(BigNumber.from(data.toBigInt().toString()))
-            })
-            props.peonContract.isPreSale().then((data: any) => {
-                if (data) setPresale(data)
-            })
+            getEthBalance(userAddress).then(data => setBalance(data))
+            getTokenBalance(userAddress).then(data => setGoldBalance(data))
+            openSale().then(data => setSale(data))
+            mintedPeon().then(data => setSold(data))
+            getMaxPeon().then(data => setMaxPeon(data))
+            mintFee().then(data => setFee(data))
+            isPreSale().then(data => setPresale(data))
             getLastMintedPeons()
-                .then(peonIds => Promise.all(peonIds.map(peonId => getPeonDetail(peonId))))
-                .then(peons => setLastMintedPeons(peons))
+                .then(peonIds => setLastMintedPeons(peonIds))
                 .catch(err => console.log(err))
             getOwnerPeons(userAddress)
-                .then(peonIds => Promise.all(peonIds.map(peonId => getPeonDetail(peonId))))
-                .then(peons => setUserPeons(peons))
+                .then(peonIds => setUserPeons(peonIds))
+                .catch(err => console.log(err))
+            getBiddings(userAddress)
+                .then(peonIds => setUserBiddings(peonIds))
                 .catch(err => console.log(err))
         }
     }
 
     const onClickConnectWallet = () => {
-        // @ts-ignore
-        props.web3.provider
-            .request({method: "eth_requestAccounts"})
-            .then(data => {
-                if (data && data.length > 0) {
-                    setConnected(true);
-                    setUserAddress(data[0]);
-                    setSigner(props.web3.getSigner(0));
-                }
-            })
+        connectWallet().then(data => {
+            if (data && data.length > 0) {
+                setConnected(true);
+                setUserAddress(data[0]);
+            }
+        })
     }
 
     const connectedComponent = () => <div>
@@ -154,16 +128,17 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
     </div>
     const adminPanel = () => <div>
         {preSale ? <div>
-            <form onSubmit={onSubmitPresale}>
-                <div>
-                    <input type="submit" value="Pre-sale"/>
-                </div>
-            </form>
-            <form onSubmit={onSubmitCompletePresale}>
-                <div>
-                    <input type="submit" value="End Pre-sale"/>
-                </div>
-            </form></div>
+                <form onSubmit={onSubmitPresale}>
+                    <div>
+                        <input type="submit" value="Pre-sale"/>
+                    </div>
+                </form>
+                <form onSubmit={onSubmitCompletePresale}>
+                    <div>
+                        <input type="submit" value="End Pre-sale"/>
+                    </div>
+                </form>
+            </div>
             : <div>presale is completed</div>}
         <form onSubmit={saleForm.handleSubmit(onSubmitSale)}>
             <div>
@@ -173,8 +148,6 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
             </div>
         </form>
     </div>
-    const userMintedPeons = () => <div></div>
-    const allMintedPeons = () => <div></div>
 
     return (
         <div className="container">
@@ -184,30 +157,83 @@ function App(props: { web3: ethers.providers.Web3Provider, peonContract: ethers.
             {connected && fee.gt(0) ? connectedComponent() : <div>Connect wallet to mint peons</div>}
             {connected ? currentSaleOpen() : null}
             {connected && userAddress.toLowerCase() === adminAddress.toLowerCase() ? adminPanel() : null}
-            {connected ? userMintedPeons() : null}
-            {connected ? allMintedPeons() : null}
+            <div>
+                <h4>My Biddings</h4>
+                {userBiddings?.map(peonId => <PeonCard key={`userpeon-${peonId}`} peonId={peonId} signer={props.signer} reload={transactionCallback}
+                                                       userAddress={userAddress}/>)}
+            </div>
             <div>
                 <h4>Your Peons</h4>
-                {userPeons?.map(peon => <PeonCard key={`userpeon-${peon.peon_id}`} peon={peon} userAddress={userAddress} />)}
+                {userPeons?.map(peonId => <PeonCard key={`userpeon-${peonId}`} peonId={peonId} signer={props.signer} reload={transactionCallback}
+                                                    userAddress={userAddress}/>)}
             </div>
             <div>
                 <h4>Last Minted Peons</h4>
-                {lastMintedPeons?.map(peon => <PeonCard key={`mintedpeon-${peon.peon_id}`} peon={peon} userAddress={userAddress} />)}
+                {lastMintedPeons?.map(peonId => <PeonCard key={`mintedpeon-${peonId}`} peonId={peonId} reload={transactionCallback}
+                                                          signer={props.signer} userAddress={userAddress}/>)}
             </div>
         </div>
     );
 }
 
-function PeonCard(props: {peon: Peon, userAddress: string}) {
+function PeonCard(props: { peonId: number, userAddress: string, signer: JsonRpcSigner, reload: (tx: Transaction) => void }) {
+    const [peon, setPeon] = useState<Peon>();
+    const [loading, setLoading] = useState(true);
+    const bidForm = useForm<BidForm>();
+    useEffect(() => {
+        setLoading(true);
+        setPeon(undefined)
+        getPeonDetail(props.peonId).then(data => {
+            setPeon(data);
+            setLoading(false);
+        }).catch(err => {
+            setLoading(false)
+        })
+    }, [])
+    const bid = (data: BidForm) => {
+        makeBid(props.signer, props.peonId, data.amount).then((tx) => {
+            setPeon(undefined)
+            props.reload(tx);
+        })
+    }
+    const cancel = (e: React.FormEvent<HTMLFormElement>) => {
+        cancelBid(props.signer, props.peonId).then((tx) => {
+            setPeon(undefined)
+            props.reload(tx)
+        })
+        e.preventDefault()
+    }
+    const accept = (e: React.FormEvent<HTMLFormElement>, buyer: string) => {
+        acceptBid(props.signer, props.peonId, buyer).then((tx) => {
+            setPeon(undefined)
+            props.reload(tx)
+        })
+        e.preventDefault()
+    }
+
+    const peonComponent = (peon: Peon) => <div>
+        <div>Peon #{peon.peon_id}</div>
+        <div>Owner {peon.owner}</div>
+        <div>Created at {peon.created_at}</div>
+        <div>Eff {peon.efficiency}</div>
+        {peon.bids.map(b => b.buyer.toLowerCase()).includes(props.userAddress.toLowerCase()) ?
+            <form onSubmit={cancel}><input type="submit" value="Cancel bid"/>
+            </form> : (peon.owner.toLowerCase() !== props.userAddress.toLowerCase() ?
+                <form onSubmit={bidForm.handleSubmit(bid)}>Offer: <input {...bidForm.register("amount")}
+                                                                         type="text"/> <input type="submit"
+                                                                                              value="Offer"/>
+                </form> : null)}
+        <div>Bids {peon.bids.map(bid => <form onSubmit={(e) => accept(e, bid.buyer)}
+                                              key={`bid-${bid.buyer}`}>bid: {bid.buyer} value: {bid.value} {peon.owner.toLowerCase() === props.userAddress.toLowerCase() ?
+            <input type="submit" value="Accept Offer"/> : null}</form>)}</div>
+        <div>Transfers {peon.transfers.map(transfer => <div
+            key={`transfer-${transfer.to}`}>from {transfer.from} to {transfer.to}</div>)}</div>
+        <div>Purchases {peon.purchases.map(purchase => <div
+            key={`purchase-${purchase.to}`}>from {purchase.from} to {purchase.to} price {purchase.value}</div>)}</div>
+        <hr/>
+    </div>
     return <div>
-        <div>Peon #{props.peon.peon_id}</div>
-        <div>Owner {props.peon.owner}</div>
-        <div>Created at {props.peon.created_at}</div>
-        <div>Eff {props.peon.efficiency}</div>
-        {props.peon.owner.toLowerCase() !== props.userAddress.toLowerCase() ? <form>Offer: <input type="text" /> <input type="submit" value="Offer" /></form> : null}
-        <div>Bids {props.peon.bids.map(bid => <form key={`bid-${bid.buyer}`}>bid: {bid.buyer} value: {bid.value} {props.peon.owner.toLowerCase() === props.userAddress.toLowerCase() ? <input type="submit" value="Accept Offer" /> : null}</form>)}</div>
-        <div>Transfers {props.peon.transfers.map(transfer => <div key={`transfer-${transfer.to}`}>from {transfer.from} to {transfer.to}</div>)}</div>
-        <div>Purchases {props.peon.purchases.map(purchase => <div key={`purchase-${purchase.to}`}>from {purchase.from} to {purchase.to} price {purchase.value}</div>)}</div>
+        {!loading ? (peon ? peonComponent(peon) : null) : <div>Loading...</div>}
     </div>
 }
 

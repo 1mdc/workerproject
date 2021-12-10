@@ -48,3 +48,7 @@ export function getPeonDetail(peonId: number): Promise<Peon> {
     return client.get<Peon>(`http://localhost:8080/peons/${peonId}`).then(resp => resp.data);
 }
 
+export function getBiddings(address: string): Promise<number[]> {
+    return client.get<number[]>(`http://localhost:8080/bidding-peons/${address}`).then(resp => resp.data);
+}
+

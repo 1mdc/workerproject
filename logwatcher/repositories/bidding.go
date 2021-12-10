@@ -15,12 +15,12 @@ type BiddingTable struct {
 
 func GetBidValue(db *gorm.DB, peonId uint, address string) (uint64, error) {
 	row := new(BiddingTable)
-	result := db.Where("peon_id = ? AND bidding_address = ?", peonId, address).First(row)
+	result := db.Where("peon_id = ? AND LOWER(bidding_address) = LOWER(?)", peonId, address).First(row)
 	return row.BiddingAmount, result.Error
 }
 
 func DeleteBidding(db *gorm.DB, peonId uint, address string) error {
-	result := db.Where("peon_id = ? AND buyer = ?", peonId, address).Delete(&BiddingTable{})
+	result := db.Where("peon_id = ? AND LOWER(bidding_address) = LOWER(?)", peonId, address).Delete(&BiddingTable{})
 	return result.Error
 }
 
@@ -39,5 +39,11 @@ func GetAllBids(db *gorm.DB, peonId uint) ([]types.PeonBid, error) {
 			Value: row.BiddingAmount,
 		})
 	}
+	return data, result.Error
+}
+
+func GetBiddingsByAddress(db *gorm.DB, address string) ([]BiddingTable, error) {
+	data := make([]BiddingTable, 0)
+	result := db.Where("LOWER(bidding_address) = LOWER(?)", address).Find(&data)
 	return data, result.Error
 }
