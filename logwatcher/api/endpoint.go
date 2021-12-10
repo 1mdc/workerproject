@@ -4,6 +4,7 @@ import (
 	"com.peon/logwatcher/repositories"
 	ptypes "com.peon/logwatcher/types"
 	"encoding/json"
+	"errors"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -26,6 +27,26 @@ func RunServer(db *gorm.DB) {
 				Peons: count,
 			})
 		}
+	})
+	router.HandleFunc("/bidding-peons/{address}", func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		address, exist := params["address"]
+		if !exist {
+			w.WriteHeader(http.StatusBadRequest)
+			logrus.Error("Missing address parameter")
+			return
+		}
+		biddings, err := repositories.GetBiddingsByAddress(db, address)
+		peonIds := make([]uint, 0)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			logrus.Error(err)
+			return
+		}
+		for _, bid := range biddings {
+			peonIds = append(peonIds, bid.PeonId)
+		}
+		json.NewEncoder(w).Encode(peonIds)
 	})
 	router.HandleFunc("/owned-peons/{address}", func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
@@ -68,9 +89,14 @@ func RunServer(db *gorm.DB) {
 		}
 		peon, err := repositories.GetPeon(db, uint(peonId))
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			logrus.Error(err)
-			return
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+				logrus.Error(err)
+				return
+			}
 		}
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)

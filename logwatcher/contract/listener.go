@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"math/big"
 	"time"
 )
 
@@ -34,7 +35,7 @@ func ListenToEvents(db *gorm.DB, client *ethclient.Client, addressToListen strin
 
 	logrus.Infof("Listening from block number %d", checkpoint)
 	query := ethereum.FilterQuery{
-		//FromBlock: big.NewInt(int64(checkpoint)),
+		FromBlock: big.NewInt(int64(checkpoint)),
 		//ToBlock:   nil,
 		Addresses: []common.Address{contractAddress},
 	}
@@ -43,7 +44,7 @@ func ListenToEvents(db *gorm.DB, client *ethclient.Client, addressToListen strin
 	if err != nil {
 		panic(err)
 	}
-	bidEventHash := crypto.Keccak256Hash([]byte("BidEvent(uint256,address)"))
+	bidEventHash := crypto.Keccak256Hash([]byte("BidEvent(uint256,address,uint256)"))
 	logrus.Infof("watching bidEventHash: %s", bidEventHash)
 	acceptEventHash := crypto.Keccak256Hash([]byte("AcceptBidEvent(uint256,address)"))
 	logrus.Infof("watching acceptEventHash: %s", acceptEventHash)
@@ -93,17 +94,18 @@ func ListenToEvents(db *gorm.DB, client *ethclient.Client, addressToListen strin
 					Buyer:  common.HexToAddress(vLog.Topics[2].Hex()),
 				}
 				logrus.Infof("AcceptBidEvent: %#v: %#v", event, err)
-				err := repositories.DeleteBidding(db, event.PeonId, event.Buyer.String())
+
+				value, err := repositories.GetBidValue(db, event.PeonId, event.Buyer.String())
 				if err != nil {
-					logrus.Errorf("Unable to save event %#v: %#v", event, err)
-				}
-				ownerAddress, err := repositories.GetOwnerOfPeon(db, event.PeonId)
-				if err != nil {
-					logrus.Errorf("Unable to find owner %#v: %#v", event, err)
+					logrus.Errorf("Unable to find bid value %#v: %#v", event, err)
 				} else {
-					value, err := repositories.GetBidValue(db, event.PeonId, event.Buyer.String())
+					err := repositories.DeleteBidding(db, event.PeonId, event.Buyer.String())
 					if err != nil {
-						logrus.Errorf("Unable to find bid value %#v: %#v", event, err)
+						logrus.Errorf("Unable to save event %#v: %#v", event, err)
+					}
+					ownerAddress, err := repositories.GetOwnerOfPeon(db, event.PeonId)
+					if err != nil {
+						logrus.Errorf("Unable to find owner %#v: %#v", event, err)
 					} else {
 						_, err := repositories.InsertPurchase(db, &repositories.PurchaseTable{
 							PeonId:      event.PeonId,
