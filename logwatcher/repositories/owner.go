@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"com.peon/logwatcher/clock"
 	ptypes "com.peon/logwatcher/types"
 	"errors"
 	"gorm.io/gorm"
@@ -20,7 +21,7 @@ func SetPeonOwner(db *gorm.DB, peonId uint, owner string) error {
 		return db.Create(&PeonOwnerTable{
 			PeonId:       peonId,
 			OwnerAddress: owner,
-			CreatedAt:    time.Now(),
+			CreatedAt:    clock.Now(),
 		}).Error
 	} else {
 		return db.Model(&PeonOwnerTable{}).Where("peon_id = ?", peonId).Update("owner_address", owner).Error
@@ -61,7 +62,7 @@ func SetPeonEff(db *gorm.DB, peonId uint, eff uint) error {
 		return db.Create(&PeonOwnerTable{
 			PeonId:     peonId,
 			Efficiency: eff,
-			CreatedAt:  time.Now(),
+			CreatedAt:  clock.Now(),
 		}).Error
 	} else {
 		return db.Model(&PeonOwnerTable{}).Where("peon_id = ?", peonId).Update("efficiency", eff).Error
@@ -77,7 +78,7 @@ func GetOwnerOfPeon(db *gorm.DB, peonId uint) (*PeonOwnerTable, error) {
 func GetOwnedPeons(db *gorm.DB, address string) ([]uint, error) {
 	rows := make([]PeonOwnerTable, 0)
 	data := make([]uint, 0)
-	result := db.Where("owner_address", address).Find(&rows)
+	result := db.Where("LOWER(owner_address) = LOWER(?)", address).Find(&rows)
 	for _, row := range rows {
 		data = append(data, row.PeonId)
 	}

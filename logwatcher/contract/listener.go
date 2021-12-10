@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"com.peon/logwatcher/clock"
 	"com.peon/logwatcher/repositories"
 	"context"
 	"github.com/ethereum/go-ethereum"
@@ -71,7 +72,7 @@ func ListenToEvents(db *gorm.DB, client *ethclient.Client, addressToListen strin
 					PeonId:         event.PeonId,
 					BiddingAddress: event.Buyer.String(),
 					BiddingAmount:  event.Amount.Uint64(),
-					CreatedAt:      time.Now(),
+					CreatedAt:      clock.Now(),
 				})
 				if err != nil {
 					logrus.Errorf("Unable to save event %#v: %#v", event, err)
@@ -109,7 +110,7 @@ func ListenToEvents(db *gorm.DB, client *ethclient.Client, addressToListen strin
 							FromAddress: ownerAddress.OwnerAddress,
 							ToAddress:   event.Buyer.String(),
 							Value:       value,
-							CreatedAt:   time.Now(),
+							CreatedAt:   clock.Now(),
 						})
 						if err != nil {
 							logrus.Errorf("Unable to insert new purchase %#v: %#v", event, err)
@@ -139,7 +140,7 @@ func ListenToEvents(db *gorm.DB, client *ethclient.Client, addressToListen strin
 					PeonId:        event.TokenId,
 					FromAddress:   event.From.String(),
 					ToAddress:     event.To.String(),
-					CreatedAt:     time.Now(),
+					CreatedAt:     clock.Now(),
 				})
 				if err != nil {
 					logrus.Errorf("Unable to save event %#v: %#v", event, err)
