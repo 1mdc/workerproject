@@ -15,6 +15,10 @@ import {
     mintFee,
     openSale, startSale, transfer, waitTransaction
 } from "./contract";
+import "./assets/css/plugins/bootstrap.min.css";
+import 'remixicon/fonts/remixicon.css'
+import "./assets/scss/style.scss";
+import AppRouter from "./Router/routes";
 
 interface SaleForm {
     numberOfPeons: number;
@@ -29,7 +33,15 @@ interface SendForm {
     address: string;
 }
 
-function App(props: { assetToken: string, signer: JsonRpcSigner }) {
+function App() {
+    return (
+        <div className="App overflow-hidden">
+            <AppRouter />
+        </div>
+    );
+}
+
+function App2(props: { assetToken: string, signer: JsonRpcSigner }) {
     const [connected, setConnected] = useState(false);
     const [error, setError] = useState("");
     const [userAddress, setUserAddress] = useState("");
