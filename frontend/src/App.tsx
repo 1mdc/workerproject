@@ -13,7 +13,7 @@ import {
     isPreSale, makeBid, mint,
     mintedPeon,
     mintFee,
-    openSale, startSale, waitTransaction
+    openSale, startSale, transfer, waitTransaction
 } from "./contract";
 
 interface SaleForm {
@@ -23,6 +23,10 @@ interface SaleForm {
 
 interface BidForm {
     amount: number;
+}
+
+interface SendForm {
+    address: string;
 }
 
 function App(props: { assetToken: string, signer: JsonRpcSigner }) {
@@ -181,6 +185,7 @@ function PeonCard(props: { peonId: number, userAddress: string, signer: JsonRpcS
     const [loading, setLoading] = useState(true);
     const [minedAmount, setMinedAmount] = useState<BigNumber>(BigNumber.from(0.0))
     const bidForm = useForm<BidForm>();
+    const sendForm = useForm<SendForm>();
     useEffect(() => {
         setLoading(true);
         setPeon(undefined)
@@ -224,6 +229,11 @@ function PeonCard(props: { peonId: number, userAddress: string, signer: JsonRpcS
         })
         e.preventDefault()
     }
+    const gift = (data: SendForm) => {
+        transfer(props.signer, props.peonId, props.userAddress, data.address).then((tx: Transaction) => {
+            setPeon(undefined);
+        })
+    }
 
     const peonComponent = (peon: Peon) => <div>
         <div>Peon #{peon.peon_id}</div>
@@ -232,6 +242,11 @@ function PeonCard(props: { peonId: number, userAddress: string, signer: JsonRpcS
         <div>Eff {peon.efficiency}</div>
         {minedAmount && minedAmount.gt(0) ? <div>pGold: {minedAmount.div(BigNumber.from(10).pow(13)).toNumber() / 100000}</div> : null}
         {minedAmount && minedAmount.gt(0) ? <form onSubmit={onClaimGold}><input type="submit" value="Claim pGold" /></form> : null}
+        {peon.owner.toLowerCase() === props.userAddress.toLowerCase() ? <div>
+            <form onSubmit={sendForm.handleSubmit(gift)}>
+                Send to someone: <input type="text" {...sendForm.register("address")} /><input type="submit" value="Send to someone" />
+            </form>
+        </div> : null}
         {peon.bids.map(b => b.buyer.toLowerCase()).includes(props.userAddress.toLowerCase()) ?
             <form onSubmit={cancel}><input type="submit" value="Cancel bid"/>
             </form> : (peon.owner.toLowerCase() !== props.userAddress.toLowerCase() ?

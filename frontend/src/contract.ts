@@ -103,3 +103,7 @@ export function getPeonMinedGold(peonId: number): Promise<BigNumber> {
 export function harvest(signer: JsonRpcSigner, peonId: number): Promise<Transaction> {
     return peonContract.connect(signer).harvest(peonId);
 }
+
+export function transfer(signer: JsonRpcSigner, peonId: number, sender:string, receiver: string): Promise<Transaction> {
+    return peonContract.connect(signer)["safeTransferFrom(address,address,uint256)"](sender, receiver, peonId);
+}
