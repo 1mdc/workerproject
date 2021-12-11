@@ -95,3 +95,11 @@ export function acceptBid(signer: JsonRpcSigner, peonId: number, buyer: string):
         gasLimit: BigNumber.from(220_000).toBigInt()
     });
 }
+
+export function getPeonMinedGold(peonId: number): Promise<BigNumber> {
+    return peonContract.harvestableAmount(peonId).then((data: any) => BigNumber.from(data.toBigInt().toString()));
+}
+
+export function harvest(signer: JsonRpcSigner, peonId: number): Promise<Transaction> {
+    return peonContract.connect(signer).harvest(peonId);
+}

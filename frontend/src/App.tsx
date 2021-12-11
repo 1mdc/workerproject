@@ -8,8 +8,8 @@ import {
     acceptBid,
     callPresale, cancelBid, connectWallet, endPresale,
     getEthBalance,
-    getMaxPeon, getSigner,
-    getTokenBalance,
+    getMaxPeon, getPeonMinedGold, getSigner,
+    getTokenBalance, harvest,
     isPreSale, makeBid, mint,
     mintedPeon,
     mintFee,
@@ -50,7 +50,7 @@ function App(props: { assetToken: string, signer: JsonRpcSigner }) {
                     setTimeout(() => updateStats(), 4_000)
                     setError(``)
                 })
-                .catch(err => setError(`Transaction ${transaction.hash} timeout`))
+                .catch(() => setError(`Transaction ${transaction.hash} timeout`))
         }
     }
 
@@ -85,13 +85,13 @@ function App(props: { assetToken: string, signer: JsonRpcSigner }) {
 //0xaba11c5dfdb797eb6f7328f5f70a9b390c19e34a3927e10f1925839d442c4293
     const updateStats = () => {
         if (userAddress !== '') {
-            getEthBalance(userAddress).then(data => setBalance(data))
-            getTokenBalance(userAddress).then(data => setGoldBalance(data))
-            openSale().then(data => setSale(data))
-            mintedPeon().then(data => setSold(data))
-            getMaxPeon().then(data => setMaxPeon(data))
-            mintFee().then(data => setFee(data))
-            isPreSale().then(data => setPresale(data))
+            getEthBalance(userAddress).then((data: BigNumber) => setBalance(data))
+            getTokenBalance(userAddress).then((data: BigNumber) => setGoldBalance(data))
+            openSale().then((data: number) => setSale(data))
+            mintedPeon().then((data: number) => setSold(data))
+            getMaxPeon().then((data: number) => setMaxPeon(data))
+            mintFee().then((data: BigNumber) => setFee(data))
+            isPreSale().then((data:Boolean) => setPresale(data))
             getLastMintedPeons()
                 .then(peonIds => setLastMintedPeons(peonIds))
                 .catch(err => console.log(err))
@@ -105,7 +105,7 @@ function App(props: { assetToken: string, signer: JsonRpcSigner }) {
     }
 
     const onClickConnectWallet = () => {
-        connectWallet().then(data => {
+        connectWallet().then((data:string[]) => {
             if (data && data.length > 0) {
                 setConnected(true);
                 setUserAddress(data[0]);
@@ -179,6 +179,7 @@ function App(props: { assetToken: string, signer: JsonRpcSigner }) {
 function PeonCard(props: { peonId: number, userAddress: string, signer: JsonRpcSigner, reload: (tx: Transaction) => void }) {
     const [peon, setPeon] = useState<Peon>();
     const [loading, setLoading] = useState(true);
+    const [minedAmount, setMinedAmount] = useState<BigNumber>(BigNumber.from(0.0))
     const bidForm = useForm<BidForm>();
     useEffect(() => {
         setLoading(true);
@@ -190,23 +191,36 @@ function PeonCard(props: { peonId: number, userAddress: string, signer: JsonRpcS
             setLoading(false)
         })
     }, [])
+    useEffect(() => {
+        if (peon) {
+            if (peon.owner.toLowerCase() === props.userAddress.toLowerCase()) {
+                getPeonMinedGold(props.peonId).then((data: BigNumber) => setMinedAmount(data));
+            }
+        }
+    }, [peon])
     const bid = (data: BidForm) => {
-        makeBid(props.signer, props.peonId, data.amount).then((tx) => {
+        makeBid(props.signer, props.peonId, data.amount).then((tx:Transaction) => {
             setPeon(undefined)
             props.reload(tx);
         })
     }
     const cancel = (e: React.FormEvent<HTMLFormElement>) => {
-        cancelBid(props.signer, props.peonId).then((tx) => {
+        cancelBid(props.signer, props.peonId).then((tx:Transaction) => {
             setPeon(undefined)
             props.reload(tx)
         })
         e.preventDefault()
     }
     const accept = (e: React.FormEvent<HTMLFormElement>, buyer: string) => {
-        acceptBid(props.signer, props.peonId, buyer).then((tx) => {
+        acceptBid(props.signer, props.peonId, buyer).then((tx:Transaction) => {
             setPeon(undefined)
             props.reload(tx)
+        })
+        e.preventDefault()
+    }
+    const onClaimGold = (e: React.FormEvent<HTMLFormElement>) => {
+        harvest(props.signer, props.peonId).then((tx:Transaction) => {
+            setMinedAmount(BigNumber.from(0))
         })
         e.preventDefault()
     }
@@ -216,6 +230,8 @@ function PeonCard(props: { peonId: number, userAddress: string, signer: JsonRpcS
         <div>Owner {peon.owner}</div>
         <div>Created at {peon.created_at}</div>
         <div>Eff {peon.efficiency}</div>
+        {minedAmount && minedAmount.gt(0) ? <div>pGold: {minedAmount.div(BigNumber.from(10).pow(13)).toNumber() / 100000}</div> : null}
+        {minedAmount && minedAmount.gt(0) ? <form onSubmit={onClaimGold}><input type="submit" value="Claim pGold" /></form> : null}
         {peon.bids.map(b => b.buyer.toLowerCase()).includes(props.userAddress.toLowerCase()) ?
             <form onSubmit={cancel}><input type="submit" value="Cancel bid"/>
             </form> : (peon.owner.toLowerCase() !== props.userAddress.toLowerCase() ?
