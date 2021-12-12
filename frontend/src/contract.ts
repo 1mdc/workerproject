@@ -3,14 +3,15 @@ import {peonAddress, pGoldAddress} from "./config";
 import {peonAbi, pGoldAbi} from "./abis";
 import {TransactionReceipt} from "@ethersproject/abstract-provider";
 import {JsonRpcSigner} from "@ethersproject/providers/src.ts/json-rpc-provider";
+import {types} from "sass";
 
 
-const web3 = new ethers.providers.Web3Provider(window.ethereum);
+export const web3 = new ethers.providers.Web3Provider(window.ethereum);
 const peonContract = new ethers.Contract(peonAddress, peonAbi, web3);
 const pGoldContract = new ethers.Contract(pGoldAddress, pGoldAbi, web3);
 
-export function getSigner(): JsonRpcSigner {
-    return web3.getSigner(0);
+export function getSigner(userAddress: string): JsonRpcSigner {
+    return web3.getSigner(userAddress);
 }
 
 export function waitTransaction(tx: string): Promise<TransactionReceipt> {
@@ -67,14 +68,12 @@ export function mintFee(): Promise<BigNumber> {
     return peonContract.mintFee().then((data: any) => BigNumber.from(data.toBigInt().toString()));
 }
 
-export function isPreSale(): Promise<Boolean> {
+export function isPreSale(): Promise<boolean> {
     return peonContract.isPreSale();
 }
 
 export function connectWallet(): Promise<string[]> {
-    // @ts-ignore
-    return web3.provider
-        .request({method: "eth_requestAccounts"});
+    return web3.listAccounts();
 }
 
 export function makeBid(signer: JsonRpcSigner, peonId: number, amount: number): Promise<Transaction> {

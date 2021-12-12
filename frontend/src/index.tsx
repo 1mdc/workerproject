@@ -3,11 +3,14 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import {assetToken} from "./config";
-import {getSigner} from "./contract";
+import {getSigner, web3} from "./contract";
+import {UseWalletProvider} from "use-wallet";
 
 
 ReactDOM.render(
-    <App />,
+    <UseWalletProvider>
+        <App />
+    </UseWalletProvider>,
     document.getElementById('root')
 );
 

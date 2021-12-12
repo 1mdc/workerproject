@@ -7,8 +7,28 @@
     &.header_wallet {
         display: none;
     }
+    .left-logo-menu {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+    }
+    .wallet-menu {
+        display: flex;
+        align-items: center;
+        div {
+            margin-right: 15px;
+        }
+        .wallet-balance-item {
+            padding: 8px 20px;
+            border-radius: $border_radius * 20;
+            border: 1px solid $color_stroke;
+            display: flex;
+            justify-content: space-between;
+        }
+    }
     .header__menu {
         -ms-overflow-style: none;
+        margin-left: 15px;
         /* IE and Edge */
         scrollbar-width: none;
         /* Firefox */
