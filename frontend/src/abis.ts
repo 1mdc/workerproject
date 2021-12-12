@@ -530,6 +530,11 @@ export const peonAbi = `[
           "internalType": "uint256",
           "name": "numberOfPresales",
           "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "receiver",
+          "type": "address"
         }
       ],
       "name": "preSale",

@@ -1,13 +1,12 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
+// @ts-ignore
 import {Tab, Tabs, TabList, TabPanel} from 'react-tabs';
-import CardMarketArt from '../../../components/cards/CardMarketArt';
-import CardMarketCards from '../../../components/cards/CardMarketCards';
 import CardMarketplace from '../../../components/cards/CardMarketplace';
-import CardMarketplaceGame from '../../../components/cards/CardMarketplaceGame';
-import Collection2 from '../../../components/collection/Collection2';
+import {Transaction} from "ethers";
 
-function MenuCategoriesMarket() {
+export default function MenuCategoriesMarket(props: {marketPeons: number[], userPeons: number[], userBids: number[],
+  recentMinted: number[], userAddress: string | null, reload: (tx: Transaction) => void}) {
   return (
     <div className="w-100">
       <Tabs className=" border-b">
@@ -40,12 +39,10 @@ function MenuCategoriesMarket() {
           <div className="container">
             <div className="section mt-100">
               <div>
-                <h2 className="section__title mb-20"> All Categories</h2>
+                <h2 className="section__title mb-20"> Peon Marketplace</h2>
                 <div>
                   <div>
-                    <div className="d-flex align-items-center">
-                      <CardMarketplace />
-                    </div>
+                    {props.userAddress ? <CardMarketplace peonIds={props.marketPeons} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
                   </div>
                 </div>
               </div>
@@ -57,11 +54,11 @@ function MenuCategoriesMarket() {
             <div className="section mt-100">
               <div className="section__head">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h2 className="section__title"> Games</h2>
+                  <h2 className="section__title"> Your Peons</h2>
 
                 </div>
               </div>
-              <CardMarketplaceGame />
+              {props.userAddress ? <CardMarketplace peonIds={props.userPeons} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
             </div>
           </div>
         </TabPanel>
@@ -70,11 +67,11 @@ function MenuCategoriesMarket() {
             <div className="section mt-100">
               <div className="section__head">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h2 className="section__title"> Artworks</h2>
+                  <h2 className="section__title"> Your Bids</h2>
 
                 </div>
               </div>
-              <CardMarketArt />
+              {props.userAddress ? <CardMarketplace peonIds={props.userBids} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
             </div>
           </div>
         </TabPanel>
@@ -83,11 +80,11 @@ function MenuCategoriesMarket() {
             <div className="section mt-100">
               <div className="section__head">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h2 className="section__title"> Trading Cards</h2>
+                  <h2 className="section__title"> Recent Minted</h2>
 
                 </div>
               </div>
-              <CardMarketCards />
+              {props.userAddress ? <CardMarketplace peonIds={props.recentMinted} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
             </div>
           </div>
         </TabPanel>
@@ -96,4 +93,9 @@ function MenuCategoriesMarket() {
   );
 }
 
-export default MenuCategoriesMarket;
+
+function RequestConnectWallet() {
+  return (<div>
+    <p>Please connect wallet to view market</p>
+  </div>)
+}

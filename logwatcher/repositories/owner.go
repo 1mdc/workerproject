@@ -28,6 +28,12 @@ func SetPeonOwner(db *gorm.DB, peonId uint, owner string) error {
 	}
 }
 
+func GetRandomPeons(db *gorm.DB) ([]uint, error) {
+	rows := make([]uint, 0)
+	result := db.Raw("select peon_id from peon_owner_tables ORDER BY random() LIMIT 20").Scan(&rows)
+	return rows, result.Error
+}
+
 func GetPeon(db *gorm.DB, peonId uint) (*ptypes.Peon, error) {
 	owner, err := GetOwnerOfPeon(db, peonId)
 	if err != nil {

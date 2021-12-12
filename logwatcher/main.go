@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		logrus.Errorf("Unable to save migrate DB")
 	}
-	contractAddress := "0x563A52aB46c0d60BC6234B77BB4220b7028F5ce3"
+	contractAddress := "0x800100C928eE467283D3B1c7a75f68f56B7899E5"
 	go contract.ListenToEvents(db, client, contractAddress)
 	api.RunServer(db)
 }

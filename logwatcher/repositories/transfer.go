@@ -47,6 +47,7 @@ func GetAllPurchases(db *gorm.DB, peonId uint) ([]ptypes.PeonPurchase, error) {
 			From:  row.FromAddress,
 			To:    row.ToAddress,
 			Value: row.Value,
+			Time:  row.CreatedAt,
 		})
 	}
 	return data, result.Error
@@ -60,6 +61,7 @@ func GetAllTransfers(db *gorm.DB, peonId uint) ([]ptypes.PeonTransfer, error) {
 		data = append(data, ptypes.PeonTransfer{
 			From: row.FromAddress,
 			To:   row.ToAddress,
+			Time: row.CreatedAt,
 		})
 	}
 	return data, result.Error

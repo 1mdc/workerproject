@@ -52,10 +52,10 @@ contract Peon is ERC721 {
         mintFee = _mintFee;
     }
 
-    function preSale(uint numberOfPresales) public onlyKeeper {
+    function preSale(uint numberOfPresales, address receiver) public onlyKeeper {
         require(isPreSale == true, "Pre-sale was ended");
         openSale += numberOfPresales;
-        _mintGroup(msg.sender, numberOfPresales);
+        _mintGroup(receiver, numberOfPresales);
     }
 
     function endPresale() public onlyKeeper {

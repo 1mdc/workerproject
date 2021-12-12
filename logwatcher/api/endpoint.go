@@ -28,6 +28,15 @@ func RunServer(db *gorm.DB) {
 			})
 		}
 	})
+	router.HandleFunc("/market", func(w http.ResponseWriter, r *http.Request) {
+		peonIds, err := repositories.GetRandomPeons(db)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			logrus.Error(err)
+			return
+		}
+		json.NewEncoder(w).Encode(peonIds)
+	})
 	router.HandleFunc("/bidding-peons/{address}", func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		address, exist := params["address"]

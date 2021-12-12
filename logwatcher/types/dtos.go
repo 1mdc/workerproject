@@ -3,8 +3,9 @@ package types
 import "time"
 
 type PeonBid struct {
-	Buyer string `json:"buyer"`
-	Value uint64 `json:"value"`
+	Buyer string    `json:"buyer"`
+	Value uint64    `json:"value"`
+	Time  time.Time `json:"time"`
 }
 
 type Peon struct {
@@ -18,14 +19,16 @@ type Peon struct {
 }
 
 type PeonTransfer struct {
-	From string `json:"from"`
-	To   string `json:"to"`
+	From string    `json:"from"`
+	To   string    `json:"to"`
+	Time time.Time `json:"time"`
 }
 
 type PeonPurchase struct {
-	From  string `json:"from"`
-	To    string `json:"to"`
-	Value uint64 `json:"value"`
+	From  string    `json:"from"`
+	To    string    `json:"to"`
+	Value uint64    `json:"value"`
+	Time  time.Time `json:"time"`
 }
 
 type PeonCountDto struct {

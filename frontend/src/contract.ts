@@ -26,8 +26,8 @@ export function mint(signer: JsonRpcSigner, fee: BigNumber): Promise<Transaction
     })
 }
 
-export function callPresale(signer: JsonRpcSigner): Promise<Transaction> {
-    return peonContract.connect(signer).preSale(10, {
+export function callPresale(signer: JsonRpcSigner, receiver: string): Promise<Transaction> {
+    return peonContract.connect(signer).preSale(10, receiver, {
         gasLimit: BigNumber.from(5_000_000).toBigInt()
     })
 }
@@ -105,4 +105,8 @@ export function harvest(signer: JsonRpcSigner, peonId: number): Promise<Transact
 
 export function transfer(signer: JsonRpcSigner, peonId: number, sender:string, receiver: string): Promise<Transaction> {
     return peonContract.connect(signer)["safeTransferFrom(address,address,uint256)"](sender, receiver, peonId);
+}
+
+export function getAdminAddress(): Promise<string> {
+    return peonContract.treasuryKeeperAddress();
 }

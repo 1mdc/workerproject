@@ -18,6 +18,8 @@ import NotFound from "../views/NotFound"
 
 // Route Specific
 import {BrowserRouter, Route, Routes} from "react-router-dom";
+import {BigNumber, Transaction} from "ethers";
+import AdminView from "../views/AdminView";
 
 const AppRoutes = (props: {
     userAddress: string | null,
@@ -25,11 +27,17 @@ const AppRoutes = (props: {
     onLogin: () => void,
     balance: number,
     tokenBalance: number,
-    onMint: () => void,
     peonLeftToMin: number,
     costToMint: number,
     mintedPeon: number,
-    totalCapPeon: number
+    totalCapPeon: number,
+    marketPeons: number[],
+    userPeons: number[],
+    userBids: number[],
+    recentMinted: number[],
+    reload: (tx: Transaction) => void,
+    preSale: boolean,
+    mintFee: BigNumber
 }) => {
     return (
         <>
@@ -41,12 +49,25 @@ const AppRoutes = (props: {
                         onLogin={props.onLogin}
                         balance={props.balance}
                         tokenBalance={props.tokenBalance}
-                        onMint={props.onMint}
                         peonLeftToMin={props.peonLeftToMin}
                         costToMint={props.costToMint}
                         mintedPeon={props.mintedPeon}
                         totalCapPeon={props.totalCapPeon}
+                        userBids={props.userBids}
+                        marketPeons={props.marketPeons}
+                        userPeons={props.userPeons}
+                        recentMinted={props.recentMinted}
+                        reload={props.reload}
+                        mintFee={props.mintFee}
                     />} />
+                    <Route path="/admin" element={<AdminView userAddress={props.userAddress}
+                                                             onLogout={props.onLogout}
+                                                             onLogin={props.onLogin}
+                                                             balance={props.balance}
+                                                             tokenBalance={props.tokenBalance}
+                                                             reload={props.reload}
+                                                             preSale={props.preSale}
+                                                            />} />
                     <Route element={<NotFound />} />
                 </Routes>
             </BrowserRouter>

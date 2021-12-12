@@ -13,17 +13,20 @@ export interface Peon {
 interface PeonTransfer {
     from: string;
     to: string;
+    time: Date;
 }
 
 interface PeonPurchase {
     from: string;
     to: string;
     value: BigInt;
+    time: Date;
 }
 
 interface PeonBid {
     buyer: string;
     value: BigInt;
+    time: Date;
 }
 
 interface PeonCountDto {
@@ -50,5 +53,9 @@ export function getPeonDetail(peonId: number): Promise<Peon> {
 
 export function getBiddings(address: string): Promise<number[]> {
     return client.get<number[]>(`http://localhost:8080/bidding-peons/${address}`).then(resp => resp.data);
+}
+
+export function getRandomPeons(): Promise<number[]> {
+    return client.get<number[]>(`http://localhost:8080/market`).then(resp => resp.data);
 }
 

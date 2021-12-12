@@ -37,6 +37,7 @@ func GetAllBids(db *gorm.DB, peonId uint) ([]types.PeonBid, error) {
 		data = append(data, types.PeonBid{
 			Buyer: row.BiddingAddress,
 			Value: row.BiddingAmount,
+			Time:  row.CreatedAt,
 		})
 	}
 	return data, result.Error
