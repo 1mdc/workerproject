@@ -1,7 +1,5 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
 import {assetToken} from "../../config";
-import {getSigner, mint} from "../../contract";
 import {BigNumber, Transaction} from "ethers";
 
 export default function Hero1(props: {
@@ -11,12 +9,10 @@ export default function Hero1(props: {
     totalCapPeon: number,
     reload: (tx: Transaction) => void,
     userAddress: string | null,
-    mintFee: BigNumber
+    mintFee: BigNumber,
+    mint: () => void
 }) {
-    const onSubmitMint = () => {
-        if (props.userAddress)
-            mint(getSigner(props.userAddress), props.mintFee).then(props.reload);
-    }
+
     return (
         <div className="hero__1">
             <div className="container">
@@ -37,7 +33,7 @@ export default function Hero1(props: {
                             <div
                                 className="space-x-20 d-flex flex-column flex-md-row
 							sm:space-y-20">
-                                <button className="btn btn-primary" onClick={onSubmitMint}>
+                                <button className="btn btn-primary" onClick={props.mint}>
                                     Mint
                                 </button>
                             </div>

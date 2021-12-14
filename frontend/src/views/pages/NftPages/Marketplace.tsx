@@ -24,6 +24,7 @@ export default function Marketplace(props: {
     recentMinted: number[],
     reload: (tx: Transaction) => void,
     mintFee: BigNumber
+    mint: () => void
 }) {
     useDocumentTitle(' Marketplace');
     return (
@@ -37,6 +38,7 @@ export default function Marketplace(props: {
                 reload={props.reload}
                 userAddress={props.userAddress}
                 mintFee={props.mintFee}
+                mint={props.mint}
             />
             <div className="d-flex justify-content-center">
                 <MenuCategoriesMarket marketPeons={props.marketPeons} recentMinted={props.recentMinted}

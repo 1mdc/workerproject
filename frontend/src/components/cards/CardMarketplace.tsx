@@ -248,7 +248,7 @@ function PeonCard(props: {peonId: number, userAddress: string, reload: (tx: Tran
                                 <div className="avatars space-x-10">
                                   <div>
                                     <p className="color_black">
-                                      <b>{shortAddress(purchase.to)}</b> bought from <b>{shortAddress(purchase.from)}</b> for <span className="color_brand">3 ETH</span>
+                                      <b>{shortAddress(purchase.from)}</b> bought for <span className="color_brand">{bigToNumber(BigNumber.from(purchase.value.toString()), 5, 18)} {assetToken}</span>
                                     </p>
                                     <span className="date color_text">{new Date(purchase.time).toLocaleString()}</span>
                                   </div>

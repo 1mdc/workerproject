@@ -12,7 +12,8 @@ const PagesMenu = [
   },
 ];
 
-export default function Header(props: { userAddress: string | null, onLogout: () => void, onLogin: () => void, balance: number, tokenBalance: number }) {
+export default function Header(props: { userAddress: string | null, onLogout: () => void,
+  onLogin: () => void, balance: number, tokenBalance: number }) {
   const [isActive, setActive] = useState(false);
   const toggleClass = () => {
     setActive(!isActive);
@@ -74,13 +75,6 @@ export default function Header(props: { userAddress: string | null, onLogout: ()
                         role="dialog"
                         aria-hidden="true">
                       <div>
-                        <button
-                            type="button"
-                            className="button close"
-                            data-dismiss="modal"
-                            aria-label="Close">
-                          <span aria-hidden="true">×</span>
-                        </button>
                         <div className="space-y-20">
                           <h3>Wallet</h3>
                           <p>

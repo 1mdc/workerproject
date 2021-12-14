@@ -21,7 +21,7 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {BigNumber, Transaction} from "ethers";
 import AdminView from "../views/AdminView";
 
-const AppRoutes = (props: {
+export default function AppRoutes(props: {
     userAddress: string | null,
     onLogout: () => void,
     onLogin: () => void,
@@ -37,8 +37,9 @@ const AppRoutes = (props: {
     recentMinted: number[],
     reload: (tx: Transaction) => void,
     preSale: boolean,
-    mintFee: BigNumber
-}) => {
+    mintFee: BigNumber,
+    mint: () => void
+}) {
     return (
         <>
             <BrowserRouter>
@@ -59,6 +60,7 @@ const AppRoutes = (props: {
                         recentMinted={props.recentMinted}
                         reload={props.reload}
                         mintFee={props.mintFee}
+                        mint={props.mint}
                     />} />
                     <Route path="/admin" element={<AdminView userAddress={props.userAddress}
                                                              onLogout={props.onLogout}
@@ -75,4 +77,3 @@ const AppRoutes = (props: {
     );
 };
 
-export default AppRoutes;
