@@ -2,7 +2,6 @@ import React from 'react';
 import { useState } from 'react';
 import {Link} from 'react-router-dom';
 import MobileMenu from './Menu/MobileMenu';
-import MegaMenu from './Menu/MegaMenu';
 import {shortAddress} from "../../utils";
 import Popup from "reactjs-popup";
 const PagesMenu = [

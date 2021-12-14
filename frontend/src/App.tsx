@@ -23,7 +23,6 @@ import 'react-toastify/dist/ReactToastify.css';
 
 export default function App() {
     const wallet = useWallet();
-    const [error, setError] = useState("");
     const [goldBalance, setGoldBalance] = useState<BigNumber>(BigNumber.from(0.0));
     const [sale, setSale] = useState(0);
     const [sold, setSold] = useState(0);
@@ -40,7 +39,7 @@ export default function App() {
     }, [])
 
     function onLogin() {
-        wallet.connect("injected").then(() => toast("login..."))
+        wallet.connect("injected").catch((err) => toast(err.message))
     }
 
     function onLogout() {
@@ -49,16 +48,14 @@ export default function App() {
 
     const transactionCallback = (transaction: Transaction) => {
         if (transaction && transaction.hash) {
-            setError(`wait for transaction ${transaction.hash}`)
+            toast(`wait for transaction ${transaction.hash}`)
             waitTransaction(transaction.hash)
                 .then(() => {
                     setTimeout(() => updateStats(), 4_000)
-                    setError(``)
                 })
-                .catch(() => setError(`Transaction ${transaction.hash} timeout`))
+                .catch((err) => toast(err.message))
         } else {
-            debugger
-            setError(`Transaction was canceled`)
+            toast(`Transaction was canceled`)
         }
     }
 

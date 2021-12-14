@@ -10,6 +10,7 @@ import {useForm} from "react-hook-form";
 import {acceptBid, cancelBid, getPeonMinedGold, getSigner, harvest, makeBid, transfer} from "../../contract";
 import {assetToken} from "../../config";
 import {bigToNumber, shortAddress} from "../../utils";
+import {toast} from "react-toastify";
 
 
 interface BidForm {
@@ -49,7 +50,7 @@ function PeonCard(props: {peonId: number, userAddress: string, reload: (tx: Tran
   useEffect(() => {
     if (peon) {
       if (peon.owner.toLowerCase() === props.userAddress.toLowerCase()) {
-        getPeonMinedGold(props.peonId).then((data: BigNumber) => setMinedAmount(data));
+        getPeonMinedGold(props.peonId).then((data: BigNumber) => setMinedAmount(data)).catch((err) => toast(err.message))
       }
     }
   }, [peon])
@@ -57,32 +58,32 @@ function PeonCard(props: {peonId: number, userAddress: string, reload: (tx: Tran
     makeBid(getSigner(props.userAddress), props.peonId, data.amount).then((tx:Transaction) => {
       setPeon(undefined)
       props.reload(tx);
-    })
+    }).catch((err) => toast(err.message))
   }
   const cancel = (e: React.FormEvent<HTMLFormElement>) => {
     cancelBid(getSigner(props.userAddress), props.peonId).then((tx:Transaction) => {
       setPeon(undefined)
       props.reload(tx)
-    })
+    }).catch((err) => toast(err.message))
     e.preventDefault()
   }
   const accept = (e: React.FormEvent<HTMLFormElement>, buyer: string) => {
     acceptBid(getSigner(props.userAddress), props.peonId, buyer).then((tx:Transaction) => {
       setPeon(undefined)
       props.reload(tx)
-    })
+    }).catch((err) => toast(err.message))
     e.preventDefault()
   }
   const onClaimGold = (e: React.FormEvent<HTMLFormElement>) => {
     harvest(getSigner(props.userAddress), props.peonId).then((tx:Transaction) => {
       setMinedAmount(BigNumber.from(0))
-    })
+    }).catch((err) => toast(err.message))
     e.preventDefault()
   }
   const gift = (data: SendForm) => {
     transfer(getSigner(props.userAddress), props.peonId, props.userAddress, data.address).then((tx: Transaction) => {
       setPeon(undefined);
-    })
+    }).catch((err) => toast(err.message))
   }
   
   return <div className="col-2 col-lg-2 col-md-3 col-sm-3" key={props.peonId}>
