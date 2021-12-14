@@ -20,6 +20,7 @@ import {useWallet} from "use-wallet";
 import {bigToNumber} from "./utils";
 import {toast, ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import {chainId} from "./config";
 
 export default function App() {
     const wallet = useWallet();
@@ -67,7 +68,14 @@ export default function App() {
     }
 
     useEffect(() => {
-        updateStats();
+        if (wallet.chainId === chainId) {
+            updateStats();
+        } else {
+            if (wallet.account && wallet.chainId) {
+                toast("Incorrect chain. Please connect to BSC Chain")
+                wallet.reset()
+            }
+        }
     }, [wallet.account])
 
     const updateStats = () => {
