@@ -43,12 +43,12 @@ export default function AdminView(props:{
                 {props.preSale ? <div>
                         <form onSubmit={onSubmitPresale}>
                             <div>
-                                <input type="submit" value="Pre-sale"/>
+                                <input className="btn btn-primary" type="submit" value="Pre-sale"/>
                             </div>
                         </form>
                         <form onSubmit={onSubmitCompletePresale}>
                             <div>
-                                <input type="submit" value="End Pre-sale"/>
+                                <input className="btn btn-primary" type="submit" value="End Pre-sale"/>
                             </div>
                         </form>
                     </div>
@@ -57,7 +57,7 @@ export default function AdminView(props:{
                     <div>
                         Number of sales: <input type="number" {...saleForm.register("numberOfPeons")} />
                         Fee Increase: <input type="number" {...saleForm.register("feeIncrease")} step="any"/>
-                        <input type="submit" value="Start Sale"/>
+                        <input className="btn btn-primary" type="submit" value="Start Sale"/>
                     </div>
                 </form>
             </div>
