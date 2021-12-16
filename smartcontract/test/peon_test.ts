@@ -288,7 +288,7 @@ describe("peon contract", function () {
     expect((await peon.harvestableAmount(1)).toString()).to.equal(
       (
         (await peon.efficiencyOf(1)).toBigInt() *
-        BigNumber.from(10).pow(16).toBigInt()
+        BigNumber.from(50).div(2).mul(BigNumber.from(10).pow(16)).toBigInt()
       ).toString()
     );
   });
@@ -303,7 +303,7 @@ describe("peon contract", function () {
     expect((await mintableErc20.balanceOf(admin.address)).toString()).to.equal(
       (
         (await peon.efficiencyOf(1)).toBigInt() *
-        BigNumber.from(10).pow(16).toBigInt()
+        BigNumber.from(50).div(2).mul(BigNumber.from(10).pow(16)).toBigInt()
       ).toString()
     );
   });
@@ -320,7 +320,7 @@ describe("peon contract", function () {
       (
         (await peon.efficiencyOf(1)).toBigInt() *
         2n *
-        BigNumber.from(10).pow(16).toBigInt()
+        BigNumber.from(50).div(2).mul(BigNumber.from(10).pow(16)).toBigInt()
       ).toString()
     );
   });
@@ -341,7 +341,7 @@ describe("peon contract", function () {
       (
         (await peon.efficiencyOf(1)).toBigInt() *
         BigNumber.from(testBlockNumber - startBlockNumber).toBigInt() *
-        BigNumber.from(10).pow(16).toBigInt()
+        BigNumber.from(50).div(2).mul(BigNumber.from(10).pow(16)).toBigInt()
       ).toString()
     );
   });

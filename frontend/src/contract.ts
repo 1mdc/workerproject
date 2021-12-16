@@ -7,6 +7,7 @@ import {types} from "sass";
 
 
 export const web3 = new ethers.providers.Web3Provider(window.ethereum);
+debugger
 const peonContract = new ethers.Contract(peonAddress, peonAbi, web3);
 const pGoldContract = new ethers.Contract(pGoldAddress, pGoldAbi, web3);
 

@@ -91,7 +91,7 @@ function PeonCard(props: { peonId: number, userAddress: string, reload: (tx: Tra
             <div className="card_body space-y-10">
                 {/* =============== */}
                 <div className="card_head">
-                    <img src={`img/items/item_1.png`} alt="nftimage"/>
+                    <img src={`img/peons/${peon.efficiency}.gif`} alt={`peon_${peon.efficiency}`}/>
                     {peon && peon.bids.length > 0 ? <div className="likes space-x-3">
                         <i className="ri-heart-3-fill"/>
                         <span className="txt_sm">{peon.bids.length}</span>
