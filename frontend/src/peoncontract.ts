@@ -4,10 +4,11 @@ import {TransactionReceipt} from "@ethersproject/abstract-provider";
 import {JsonRpcSigner} from "@ethersproject/providers/src.ts/json-rpc-provider";
 
 export default class PeonContract {
-    public web3: ethers.providers.Web3Provider;
+    private readonly web3: ethers.providers.Web3Provider;
     private peonContract: ethers.Contract;
     private pGoldContract: ethers.Contract;
-    constructor(peonAddress:string, pGoldAddress: string){
+
+    constructor(peonAddress: string, pGoldAddress: string) {
         this.web3 = new ethers.providers.Web3Provider(window.ethereum);
         this.peonContract = new ethers.Contract(peonAddress, peonAbi, this.web3);
         this.pGoldContract = new ethers.Contract(pGoldAddress, pGoldAbi, this.web3);
@@ -24,28 +25,35 @@ export default class PeonContract {
 
     mint(signer: JsonRpcSigner, fee: BigNumber): Promise<Transaction> {
         const numberOfPeon = 1;
-        return this.peonContract.connect(signer).mint(numberOfPeon, {
-            value: fee.mul(numberOfPeon),
-            gasLimit: BigNumber.from(220_000).toBigInt()
+        return this.peonContract.estimateGas.mint(numberOfPeon, {
+            value: fee.mul(numberOfPeon)
+        }).then(estimation => {
+            return this.peonContract.connect(signer).mint(numberOfPeon, {
+                value: fee.mul(numberOfPeon),
+                gasLimit: estimation.mul(2).toBigInt()
+            })
         })
     }
 
     callPresale(signer: JsonRpcSigner, receiver: string): Promise<Transaction> {
-        return this.peonContract.connect(signer).preSale(10, receiver, {
-            gasLimit: BigNumber.from(5_000_000).toBigInt()
-        })
+        return this.peonContract.connect(signer).estimateGas.preSale(10).then(estimation =>
+            this.peonContract.connect(signer).preSale(10, receiver, {
+                gasLimit: estimation.mul(10).toBigInt()
+            }))
     }
 
     startSale(signer: JsonRpcSigner, numberOfPeons: number, feeIncrease: number): Promise<Transaction> {
-        return this.peonContract.connect(signer).startSale(numberOfPeons, ethers.utils.parseEther(feeIncrease.toString()), {
-            gasLimit: BigNumber.from(120_000).toBigInt()
-        })
+        return this.peonContract.connect(signer).estimateGas.startSale(numberOfPeons, ethers.utils.parseEther(feeIncrease.toString())).then(estimation =>
+            this.peonContract.connect(signer).startSale(numberOfPeons, ethers.utils.parseEther(feeIncrease.toString()), {
+                gasLimit: estimation.mul(2).toBigInt()
+            }))
     }
 
     endPresale(signer: JsonRpcSigner): Promise<Transaction> {
-        return this.peonContract.connect(signer).endPresale({
-            gasLimit: BigNumber.from(50_000).toBigInt()
-        })
+        return this.peonContract.connect(signer).estimateGas.endPresale().then(estimation =>
+            this.peonContract.connect(signer).endPresale({
+                gasLimit: estimation.mul(2).toBigInt()
+            }))
     }
 
     getEthBalance(userAddress: string): Promise<BigNumber> {
@@ -81,22 +89,27 @@ export default class PeonContract {
     }
 
     makeBid(signer: JsonRpcSigner, peonId: number, amount: number): Promise<Transaction> {
-        return this.peonContract.connect(signer).bid(peonId, {
-            value: ethers.utils.parseEther(amount.toString()),
-            gasLimit: BigNumber.from(120_000).toBigInt()
-        });
+        return this.peonContract.connect(signer).estimateGas.bid(peonId, {
+            value: ethers.utils.parseEther(amount.toString())
+        }).then(estimation =>
+            this.peonContract.connect(signer).bid(peonId, {
+                value: ethers.utils.parseEther(amount.toString()),
+                gasLimit: estimation.mul(2).toBigInt()
+            }))
     }
 
     cancelBid(signer: JsonRpcSigner, peonId: number): Promise<Transaction> {
-        return this.peonContract.connect(signer).cancel(peonId, {
-            gasLimit: BigNumber.from(120_000).toBigInt()
-        });
+        return this.peonContract.connect(signer).estimateGas.cancel(peonId).then(estimation =>
+            this.peonContract.connect(signer).cancel(peonId, {
+                gasLimit: estimation.mul(2).toBigInt()
+            }))
     }
 
     acceptBid(signer: JsonRpcSigner, peonId: number, buyer: string): Promise<Transaction> {
-        return this.peonContract.connect(signer).accept(peonId, buyer, {
-            gasLimit: BigNumber.from(220_000).toBigInt()
-        });
+        return this.peonContract.connect(signer).estimateGas.accept(peonId, buyer).then(estimation =>
+            this.peonContract.connect(signer).accept(peonId, buyer, {
+                gasLimit: estimation.mul(2).toBigInt()
+            }))
     }
 
     getPeonMinedGold(peonId: number): Promise<BigNumber> {
@@ -107,7 +120,7 @@ export default class PeonContract {
         return this.peonContract.connect(signer).harvest(peonId);
     }
 
-    transfer(signer: JsonRpcSigner, peonId: number, sender:string, receiver: string): Promise<Transaction> {
+    transfer(signer: JsonRpcSigner, peonId: number, sender: string, receiver: string): Promise<Transaction> {
         return this.peonContract.connect(signer)["safeTransferFrom(address,address,uint256)"](sender, receiver, peonId);
     }
 
