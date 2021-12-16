@@ -31,9 +31,16 @@ func CreateCheckpoint(db *gorm.DB, blockNumber uint64) error {
 	return nil
 }
 
-func GetLastCheckpoint(db *gorm.DB) (uint64, error) {
+func GetLastCheckpoint(db *gorm.DB, fallbackCheckpoint uint64) (uint64, error) {
 	conf := new(AppConfig)
 	result := db.Where("name = ?", "block_number").First(conf)
+	if conf.Value == "" {
+		err := CreateCheckpoint(db, fallbackCheckpoint)
+		if err != nil {
+			return 0, err
+		}
+		return fallbackCheckpoint, nil
+	}
 	blockNumber, err := strconv.ParseUint(conf.Value, 10, 64)
 	if err != nil {
 		return 0, err

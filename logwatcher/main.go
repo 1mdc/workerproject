@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	client, err := ethclient.Dial("ws://localhost:8545")
+	client, err := ethclient.Dial("http://localhost:8545")
 	db, err := dbconnection.GetDbConnection()
 	if err != nil {
 		panic(err)
@@ -21,6 +21,6 @@ func main() {
 		logrus.Errorf("Unable to save migrate DB")
 	}
 	contractAddress := os.Getenv("PEON_ADDRESS")
-	go contract.ListenToEvents(db, client, contractAddress)
+	go contract.ListenToEvents(db, client, contractAddress, 0)
 	api.RunServer(db)
 }
