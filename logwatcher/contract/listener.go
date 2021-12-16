@@ -54,9 +54,9 @@ func listenToBlock(db *gorm.DB, client *ethclient.Client, startBlock uint64, con
 		logrus.Error("unable to fetch checkpoint: ", err)
 		return err
 	} else {
-		logrus.Infof("fetching from block number %d to %d", checkpoint, toCheckpoint)
+		logrus.Infof("fetching from block number %d to %d", checkpoint+1, toCheckpoint)
 		vLogs, err := client.FilterLogs(context.Background(), ethereum.FilterQuery{
-			FromBlock: big.NewInt(int64(checkpoint)),
+			FromBlock: big.NewInt(int64(checkpoint + 1)),
 			ToBlock:   big.NewInt(int64(toCheckpoint)),
 			Addresses: []common.Address{contractAddress},
 		})
@@ -71,9 +71,9 @@ func listenToBlock(db *gorm.DB, client *ethclient.Client, startBlock uint64, con
 					return err
 				}
 			}
-			err := repositories.UpdateCheckpoint(db, toCheckpoint+1)
+			err := repositories.UpdateCheckpoint(db, toCheckpoint)
 			if err != nil {
-				logrus.Errorf("Unable to save checkpoint %d: %#v", toCheckpoint+1, err)
+				logrus.Errorf("Unable to save checkpoint %d: %#v", toCheckpoint, err)
 				return err
 			}
 			return nil
@@ -107,7 +107,7 @@ func getFetchCheckpoint(db *gorm.DB, client *ethclient.Client, startBlock uint64
 	} else {
 		checkpoint = lastCheckpoint
 	}
-	toBlock := uint64(math.Min(float64(onchainCheckpoint)-float64(lastCheckpoint), 252)) // 1 hour batch per fetch
+	toBlock := uint64(math.Min(float64(onchainCheckpoint), 252)) // 1 hour batch per fetch
 	return checkpoint, toBlock, err
 }
 

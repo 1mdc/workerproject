@@ -4,6 +4,7 @@ import {Link} from 'react-router-dom';
 import MobileMenu from './Menu/MobileMenu';
 import {shortAddress} from "../../utils";
 import Popup from "reactjs-popup";
+import Banana from "../Banana";
 const PagesMenu = [
   {
     title: 'Marketplace',
@@ -54,7 +55,7 @@ export default function Header(props: { userAddress: string | null, onLogout: ()
                 {props.balance} BNB
               </div>
               <div className="wallet-balance-item">
-                {props.tokenBalance} pGOLD
+                {props.tokenBalance} <Banana />
               </div>
               <div className="header__btns">
                 {props.userAddress ? <Popup

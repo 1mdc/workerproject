@@ -1,16 +1,16 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 // @ts-ignore
-import {Tab, Tabs, TabList, TabPanel} from 'react-tabs';
+import {Tab, TabList, TabPanel, Tabs} from 'react-tabs';
 import {BigNumber, Transaction} from "ethers";
 import {getPeonDetail, Peon} from "../../apis";
 import {useForm} from "react-hook-form";
-import {acceptBid, cancelBid, getPeonMinedGold, getSigner, harvest, makeBid, transfer} from "../../contract";
-import {assetToken} from "../../config";
 import {bigToNumber, shortAddress} from "../../utils";
 import {toast} from "react-toastify";
+import PeonContract from "../../peoncontract";
+import Banana from "../Banana";
 
 
 interface BidForm {
@@ -21,69 +21,70 @@ interface SendForm {
     address: string;
 }
 
-export default function CardMarketplace(props: { peonIds: number[], userAddress: string, reload: (tx: Transaction) => void }) {
+export default function CardMarketplace(props: { contract: PeonContract, assetToken: string, peonIds: number[], userAddress: string, reload: (tx: Transaction) => void }) {
     return (
         <div>
             <div className="row">
-                {props.peonIds.map(peonId => <PeonCard key={peonId} peonId={peonId} userAddress={props.userAddress}
+                {props.peonIds.map(peonId => <PeonCard contract={props.contract} assetToken={props.assetToken} key={peonId} peonId={peonId} userAddress={props.userAddress}
                                                        reload={props.reload}/>)}
             </div>
         </div>
     );
 }
 
-function PeonCard(props: { peonId: number, userAddress: string, reload: (tx: Transaction) => void }) {
+function PeonCard(props: { contract: PeonContract, assetToken: string, peonId: number, userAddress: string, reload: (tx: Transaction) => void }) {
     const [peon, setPeon] = useState<Peon>();
-    const [loading, setLoading] = useState(true);
     const [minedAmount, setMinedAmount] = useState<BigNumber>(BigNumber.from(0.0))
     const bidForm = useForm<BidForm>();
     const sendForm = useForm<SendForm>();
     useEffect(() => {
-        setLoading(true);
         setPeon(undefined)
         getPeonDetail(props.peonId).then(data => {
             setPeon(data);
-            setLoading(false);
-        }).catch(err => {
-            setLoading(false)
         })
     }, [])
     useEffect(() => {
         if (peon) {
             if (peon.owner.toLowerCase() === props.userAddress.toLowerCase()) {
-                getPeonMinedGold(props.peonId).then((data: BigNumber) => setMinedAmount(data)).catch((err) => toast(err.message))
+                props.contract.getPeonMinedGold(props.peonId).then((data: BigNumber) => {
+                    setMinedAmount(data)
+                }).catch((err) => toast(err.message))
             }
         }
     }, [peon])
     const bid = (data: BidForm) => {
-        makeBid(getSigner(props.userAddress), props.peonId, data.amount).then((tx: Transaction) => {
-            setPeon(undefined)
+        props.contract.makeBid(props.contract.getSigner(props.userAddress), props.peonId, data.amount).then((tx: Transaction) => {
             props.reload(tx);
         }).catch((err) => toast(err.message))
     }
     const cancel = (e: React.FormEvent<HTMLFormElement>) => {
-        cancelBid(getSigner(props.userAddress), props.peonId).then((tx: Transaction) => {
-            setPeon(undefined)
+        props.contract.cancelBid(props.contract.getSigner(props.userAddress), props.peonId).then((tx: Transaction) => {
             props.reload(tx)
         }).catch((err) => toast(err.message))
         e.preventDefault()
     }
     const accept = (e: React.FormEvent<HTMLFormElement>, buyer: string) => {
-        acceptBid(getSigner(props.userAddress), props.peonId, buyer).then((tx: Transaction) => {
-            setPeon(undefined)
+        props.contract.acceptBid(props.contract.getSigner(props.userAddress), props.peonId, buyer).then((tx: Transaction) => {
             props.reload(tx)
         }).catch((err) => toast(err.message))
         e.preventDefault()
     }
     const onClaimGold = () => {
-        harvest(getSigner(props.userAddress), props.peonId).then((tx: Transaction) => {
+        props.contract.harvest(props.contract.getSigner(props.userAddress), props.peonId).then((tx: Transaction) => {
             setMinedAmount(BigNumber.from(0))
         }).catch((err) => toast(err.message))
     }
     const gift = (data: SendForm) => {
-        transfer(getSigner(props.userAddress), props.peonId, props.userAddress, data.address).then((tx: Transaction) => {
-            setPeon(undefined);
+        props.contract.transfer(props.contract.getSigner(props.userAddress), props.peonId, props.userAddress, data.address).then((tx: Transaction) => {
+            props.reload(tx)
         }).catch((err) => toast(err.message))
+    }
+
+    function cancelForm() {
+        return <form onSubmit={cancel}><input
+            className="btn btn-sm btn-primary"
+            type="submit" value="Cancel bid"/>
+        </form>;
     }
 
     return <div className="col-2 col-lg-2 col-md-3 col-sm-3" key={props.peonId}>
@@ -91,7 +92,7 @@ function PeonCard(props: { peonId: number, userAddress: string, reload: (tx: Tra
             <div className="card_body space-y-10">
                 {/* =============== */}
                 <div className="card_head">
-                    <img src={`img/peons/${peon.efficiency}.gif`} alt={`peon_${peon.efficiency}`}/>
+                    <img src={`peons/${peon.efficiency}.gif`} alt={`peon_${peon.efficiency}`}/>
                     {peon && peon.bids.length > 0 ? <div className="likes space-x-3">
                         <i className="ri-heart-3-fill"/>
                         <span className="txt_sm">{peon.bids.length}</span>
@@ -110,7 +111,7 @@ function PeonCard(props: { peonId: number, userAddress: string, reload: (tx: Tra
                                 className="color_green txt_sm">{bigToNumber(BigNumber.from(peon.bids.sort((a, b) => a.value > b.value ? 1 : -1)[0].value.toString()), 5, 18)} BNB</span>
                             </p> : null}
                             <p className="txt_sm">Mine: <span
-                                className="color_green txt_sm">{parseInt(peon.efficiency.toString()) / 100} pGOLD</span>
+                                className="color_green txt_sm">{parseInt(peon.efficiency.toString()) / 100} <Banana /></span>
                             </p>
                         </div>
                     </div>
@@ -192,8 +193,8 @@ function PeonCard(props: { peonId: number, userAddress: string, reload: (tx: Tra
                                                 <div className="tab-content">
                                                     {peon.owner.toLowerCase() === props.userAddress.toLowerCase() ?
                                                         <TabPanel className="active">
-                                                            <p>This peon has mined {minedAmount} pGOLD</p>
-                                                            <button className="btn btn-primary" onClick={onClaimGold}>Claim pGOLD</button>
+                                                            <p>This peon has mined {bigToNumber(minedAmount, 3, 18)} <Banana /></p>
+                                                            <button className="btn btn-primary" onClick={onClaimGold}>Claim <Banana /></button>
                                                             <hr/>
                                                             <p>
                                                                 You are owner of this peon. This form allows you to send
@@ -210,39 +211,43 @@ function PeonCard(props: { peonId: number, userAddress: string, reload: (tx: Tra
                                                                        value="Send"/>
                                                             </form>
                                                         </TabPanel> : <TabPanel className="active">
-                                                            <form onSubmit={bidForm.handleSubmit(bid)}>
-                                                                <p>
-                                                                    Input the amount of {assetToken} you would like to
-                                                                    bid for this peon
-                                                                </p>
-                                                                <input
-                                                                    type="text"
-                                                                    className="form-control"
-                                                                    {...bidForm.register("amount")}
-                                                                />
-                                                                {peon.purchases.length > 0 ?
-                                                                    <div className="d-flex justify-content-between">
-                                                                        <p> Last purchase price:</p>
-                                                                        <p className="text-right color_black txt _bold">
-                                                                            {bigToNumber(BigNumber.from(peon.purchases.sort((a, b) => a.value > b.value ? 1 : -1)[0].value.toString()), 5, 18)} {assetToken}
-                                                                        </p>
-                                                                    </div> : null}
-                                                                {peon.bids.length > 0 ?
-                                                                    <div className="d-flex justify-content-between">
-                                                                        <p> Highest current bid:</p>
-                                                                        <p className="text-right color_black txt _bold">
-                                                                            {bigToNumber(BigNumber.from(peon.bids.sort((a, b) => a.value > b.value ? 1 : -1)[0].value.toString()), 5, 18)} {assetToken}
-                                                                        </p>
-                                                                    </div> : null}
-                                                                <div className="d-flex justify-content-between">
-                                                                    <p> Peon's efficiency:</p>
-                                                                    <p className="text-right color_black txt _bold">
-                                                                        {parseInt(peon.efficiency.toString()) / 100} pGOLD
+                                                            {peon.bids.map(b => b.buyer.toLowerCase()).includes(props.userAddress.toLowerCase()) ?
+                                                                <div>
+                                                                    <p>You already placed a bit for this peon. You need to cancel the current bid to bid a new price</p>
+                                                                    {cancelForm()}
+                                                                </div>: <form onSubmit={bidForm.handleSubmit(bid)}>
+                                                                    <p>
+                                                                        Input the amount of {props.assetToken} you would like to
+                                                                        bid for this peon
                                                                     </p>
-                                                                </div>
-                                                                <input type="submit" className="btn btn-primary w-full"
-                                                                       value="Place a bid"/>
-                                                            </form>
+                                                                    <input
+                                                                        type="text"
+                                                                        className="form-control"
+                                                                        {...bidForm.register("amount")}
+                                                                    />
+                                                                    {peon.purchases.length > 0 ?
+                                                                        <div className="d-flex justify-content-between">
+                                                                            <p> Last purchase price:</p>
+                                                                            <p className="text-right color_black txt _bold">
+                                                                                {bigToNumber(BigNumber.from(peon.purchases.sort((a, b) => a.value > b.value ? 1 : -1)[0].value.toString()), 5, 18)} {props.assetToken}
+                                                                            </p>
+                                                                        </div> : null}
+                                                                    {peon.bids.length > 0 ?
+                                                                        <div className="d-flex justify-content-between">
+                                                                            <p> Highest current bid:</p>
+                                                                            <p className="text-right color_black txt _bold">
+                                                                                {bigToNumber(BigNumber.from(peon.bids.sort((a, b) => a.value > b.value ? 1 : -1)[0].value.toString()), 5, 18)} {props.assetToken}
+                                                                            </p>
+                                                                        </div> : null}
+                                                                    <div className="d-flex justify-content-between">
+                                                                        <p> Peon's efficiency:</p>
+                                                                        <p className="text-right color_black txt _bold">
+                                                                            {parseInt(peon.efficiency.toString()) / 100} <Banana />
+                                                                        </p>
+                                                                    </div>
+                                                                    <input type="submit" className="btn btn-primary w-full"
+                                                                           value="Place a bid"/>
+                                                                </form>}
                                                         </TabPanel>}
                                                     <TabPanel>
                                                         <div className="space-y-20">
@@ -252,7 +257,7 @@ function PeonCard(props: { peonId: number, userAddress: string, reload: (tx: Tra
                                                                         <div>
                                                                             <p className="color_black">
                                                                                 <b>{shortAddress(bid.buyer)}</b> bids <span
-                                                                                className="color_brand">{bigToNumber(BigNumber.from(bid.value.toString()), 5, 18)} {assetToken}</span>
+                                                                                className="color_brand">{bigToNumber(BigNumber.from(bid.value.toString()), 5, 18)} {props.assetToken}</span>
                                                                             </p>
                                                                             <span
                                                                                 className="date color_text">{new Date(bid.time).toLocaleString()}</span>
@@ -265,10 +270,7 @@ function PeonCard(props: { peonId: number, userAddress: string, reload: (tx: Tra
                                                                                         type="submit" value="Accept Offer"/>
                                                                                 </form> : null}
                                                                             {peon.bids.map(b => b.buyer.toLowerCase()).includes(props.userAddress.toLowerCase()) ?
-                                                                                <form onSubmit={cancel}><input
-                                                                                    className="btn btn-sm btn-primary"
-                                                                                    type="submit" value="Cancel bid"/>
-                                                                                </form> : null}
+                                                                                cancelForm() : null}
                                                                         </div>
                                                                     </div>
                                                                 </div>) :
@@ -284,7 +286,7 @@ function PeonCard(props: { peonId: number, userAddress: string, reload: (tx: Tra
                                                                             <p className="color_black">
                                                                                 <b>{shortAddress(purchase.from)}</b> bought
                                                                                 for <span
-                                                                                className="color_brand">{bigToNumber(BigNumber.from(purchase.value.toString()), 5, 18)} {assetToken}</span>
+                                                                                className="color_brand">{bigToNumber(BigNumber.from(purchase.value.toString()), 5, 18)} {props.assetToken}</span>
                                                                             </p>
                                                                             <span
                                                                                 className="date color_text">{new Date(purchase.time).toLocaleString()}</span>

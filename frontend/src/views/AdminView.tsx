@@ -1,16 +1,21 @@
 import React from 'react';
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
-import {callPresale, endPresale, getSigner, startSale} from "../contract";
 import {Transaction} from "ethers";
 import {useForm} from "react-hook-form";
+import PeonContract from "../peoncontract";
 
 interface SaleForm {
     numberOfPeons: number;
     feeIncrease: number;
 }
 
+interface PreSaleForm {
+    receiver: string;
+}
+
 export default function AdminView(props:{
+    contract: PeonContract,
     userAddress: string | null,
     onLogout: () => void,
     onLogin: () => void,
@@ -20,19 +25,19 @@ export default function AdminView(props:{
     preSale: boolean,
 }) {
     const saleForm = useForm<SaleForm>();
+    const presaleForm = useForm<PreSaleForm>();
 
-    const onSubmitPresale = (e: React.FormEvent<HTMLFormElement>) => {
-        if (props.userAddress) callPresale(getSigner(props.userAddress), "").then(props.reload);
-        e.preventDefault();
+    const onSubmitPresale = (data: PreSaleForm) => {
+        if (props.userAddress) props.contract.callPresale(props.contract.getSigner(props.userAddress), data.receiver).then(props.reload);
     }
 
     const onSubmitCompletePresale = (e: React.FormEvent<HTMLFormElement>) => {
-        if (props.userAddress) endPresale(getSigner(props.userAddress)).then(props.reload);
+        if (props.userAddress) props.contract.endPresale(props.contract.getSigner(props.userAddress)).then(props.reload);
         e.preventDefault();
     }
 
     const onSubmitSale = (data: SaleForm) => {
-        if (props.userAddress) startSale(getSigner(props.userAddress), data.numberOfPeons, data.feeIncrease).then(props.reload);
+        if (props.userAddress) props.contract.startSale(props.contract.getSigner(props.userAddress), data.numberOfPeons, data.feeIncrease).then(props.reload);
     }
 
     return (<div>
@@ -41,8 +46,9 @@ export default function AdminView(props:{
             <div className="box is__big">
                 <h1>Admin Panel</h1>
                 {props.preSale ? <div>
-                        <form onSubmit={onSubmitPresale}>
+                        <form onSubmit={presaleForm.handleSubmit(onSubmitPresale)}>
                             <div>
+                                Receiver: <input type="text" {...presaleForm.register("receiver")} />
                                 <input className="btn btn-primary" type="submit" value="Pre-sale"/>
                             </div>
                         </form>

@@ -1,17 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {BigNumber, Transaction} from "ethers";
 import {getBiddings, getLastMintedPeons, getOwnerPeons, getRandomPeons} from "./apis";
-import {
-    getMaxPeon,
-    getSigner,
-    getTokenBalance,
-    isPreSale,
-    mint,
-    mintedPeon,
-    mintFee,
-    openSale,
-    waitTransaction
-} from "./contract";
+import PeonContract from "./peoncontract";
 import "./assets/css/plugins/bootstrap.min.css";
 import 'remixicon/fonts/remixicon.css'
 import "./assets/scss/style.scss";
@@ -20,9 +10,8 @@ import {useWallet} from "use-wallet";
 import {bigToNumber} from "./utils";
 import {toast, ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import {chainId} from "./config";
 
-export default function App() {
+export default function App(props: {contract: PeonContract, chainId: number, peonAddress: string, goldAddress: string, assetToken: string}) {
     const wallet = useWallet();
     const [goldBalance, setGoldBalance] = useState<BigNumber>(BigNumber.from(0.0));
     const [sale, setSale] = useState(0);
@@ -49,10 +38,10 @@ export default function App() {
 
     const transactionCallback = (transaction: Transaction) => {
         if (transaction && transaction.hash) {
-            toast(`wait for transaction ${transaction.hash}`)
-            waitTransaction(transaction.hash)
+            toast(`Transaction is processing ${transaction.hash}`, {autoClose: 20_000})
+            props.contract.waitTransaction(transaction.hash)
                 .then(() => {
-                    setTimeout(() => updateStats(), 4_000)
+                    setTimeout(() => updateStats(), 20_000)
                 })
                 .catch((err) => toast(err.message))
         } else {
@@ -64,11 +53,11 @@ export default function App() {
 
     const mintPeon = () => {
         if (wallet.account)
-            mint(getSigner(wallet.account), fee).then(transactionCallback).catch((err) => toast(err.message));
+            props.contract.mint(props.contract.getSigner(wallet.account), fee).then(transactionCallback).catch((err) => toast(err.message));
     }
 
     useEffect(() => {
-        if (wallet.chainId === chainId) {
+        if (wallet.account && wallet.chainId === props.chainId) {
             updateStats();
         } else {
             if (wallet.account && wallet.chainId) {
@@ -80,12 +69,12 @@ export default function App() {
 
     const updateStats = () => {
         if (wallet.account) {
-            getTokenBalance(wallet.account).then((data: BigNumber) => setGoldBalance(data)).catch((err) => toast(err.message))
-            openSale().then((data: number) => setSale(data)).catch((err) => toast(err.message))
-            mintedPeon().then((data: number) => setSold(data)).catch((err) => toast(err.message))
-            getMaxPeon().then((data: number) => setMaxPeon(data)).catch((err) => toast(err.message))
-            mintFee().then((data: BigNumber) => setFee(data)).catch((err) => toast(err.message))
-            isPreSale().then((data:boolean) => setPresale(data)).catch((err) => toast(err.message))
+            props.contract.getTokenBalance(wallet.account).then((data: BigNumber) => setGoldBalance(data)).catch((err) => toast(err.message))
+            props.contract.openSale().then((data: number) => setSale(data)).catch((err) => toast(err.message))
+            props.contract.mintedPeon().then((data: number) => setSold(data)).catch((err) => toast(err.message))
+            props.contract.getMaxPeon().then((data: number) => setMaxPeon(data)).catch((err) => toast(err.message))
+            props.contract.mintFee().then((data: BigNumber) => setFee(data)).catch((err) => toast(err.message))
+            props.contract.isPreSale().then((data:boolean) => setPresale(data)).catch((err) => toast(err.message))
             getLastMintedPeons()
                 .then(peonIds => setLastMintedPeons(peonIds))
                 .catch(err => toast(err.message))
@@ -114,6 +103,8 @@ export default function App() {
         <div className="App overflow-hidden">
             <ToastContainer />
             <AppRouter
+                contract={props.contract}
+                assetToken={props.assetToken}
                 userAddress={wallet.account}
                 onLogout={onLogout}
                 onLogin={onLogin}

@@ -1,6 +1,6 @@
 import React from 'react';
-import {assetToken} from "../../config";
 import {BigNumber, Transaction} from "ethers";
+import Banana from "../Banana";
 
 export default function Hero1(props: {
     peonLeftToMin: number,
@@ -10,7 +10,8 @@ export default function Hero1(props: {
     reload: (tx: Transaction) => void,
     userAddress: string | null,
     mintFee: BigNumber,
-    mint: () => void
+    mint: () => void,
+    assetToken: string
 }) {
 
     return (
@@ -23,11 +24,11 @@ export default function Hero1(props: {
                                 Peon Ecosystem
                             </h1>
                             <p className="hero__text txt">
-                                Peon NFT is an important asset for Peon Ecosystem. It generates pGOLD that could be used as
+                                Peon NFT is an important asset for Peon Ecosystem. It generates pBANANA token (<Banana />) that could be used as
                                 currency in games and also can be used to exchange to other tokens.
                             </p>
                             <p className="hero__text txt">
-                                <b>{props.peonLeftToMin} Peons</b> left can be minted in this sale. Cost to mint is <b>{props.costToMint} {assetToken}</b>. <b>{props.mintedPeon}/{props.totalCapPeon}</b> peons
+                                <b>{props.peonLeftToMin} Peons</b> left can be minted in this sale. Cost to mint is <b>{props.costToMint} {props.assetToken}</b>. <b>{props.mintedPeon}/{props.totalCapPeon}</b> peons
                                 minted so far.
                             </p>
                             <div

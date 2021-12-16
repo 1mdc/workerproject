@@ -4,8 +4,9 @@ import {Link} from 'react-router-dom';
 import {Tab, Tabs, TabList, TabPanel} from 'react-tabs';
 import CardMarketplace from '../../../components/cards/CardMarketplace';
 import {Transaction} from "ethers";
+import PeonContract from "../../../peoncontract";
 
-export default function MenuCategoriesMarket(props: {marketPeons: number[], userPeons: number[], userBids: number[],
+export default function MenuCategoriesMarket(props: {contract: PeonContract, assetToken: string, marketPeons: number[], userPeons: number[], userBids: number[],
   recentMinted: number[], userAddress: string | null, reload: (tx: Transaction) => void}) {
   return (
     <div className="w-100">
@@ -13,24 +14,25 @@ export default function MenuCategoriesMarket(props: {marketPeons: number[], user
         <TabList className="menu_categories  bg_white py-20 px-15 w-100">
           <Tab>
             <Link className="color_brand" to="/">
+              <i className="ri-store-line" />
               <span> Peon Marketplace</span>
             </Link>
           </Tab>
           <Tab>
             <Link to="/">
-              <i className="ri-gamepad-line" />
+              <i className="ri-user-line" />
               <span> Your Peons</span>
             </Link>
           </Tab>
           <Tab>
             <Link to="/">
-              <i className="ri-brush-line" />
+              <i className="ri-auction-line" />
               <span> Your Bids</span>
             </Link>
           </Tab>
           <Tab>
             <Link to="/">
-              <i className="ri-stock-line" />
+              <i className="ri-time-line" />
               <span> Recent Minted</span>
             </Link>
           </Tab>
@@ -42,7 +44,7 @@ export default function MenuCategoriesMarket(props: {marketPeons: number[], user
                 <h2 className="section__title mb-20"> Peon Marketplace</h2>
                 <div>
                   <div>
-                    {props.userAddress ? <CardMarketplace peonIds={props.marketPeons} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
+                    {props.userAddress ? <CardMarketplace contract={props.contract} assetToken={props.assetToken} peonIds={props.marketPeons} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
                   </div>
                 </div>
               </div>
@@ -58,7 +60,7 @@ export default function MenuCategoriesMarket(props: {marketPeons: number[], user
 
                 </div>
               </div>
-              {props.userAddress ? <CardMarketplace peonIds={props.userPeons} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
+              {props.userAddress ? <CardMarketplace contract={props.contract} assetToken={props.assetToken} peonIds={props.userPeons} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
             </div>
           </div>
         </TabPanel>
@@ -71,7 +73,7 @@ export default function MenuCategoriesMarket(props: {marketPeons: number[], user
 
                 </div>
               </div>
-              {props.userAddress ? <CardMarketplace peonIds={props.userBids} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
+              {props.userAddress ? <CardMarketplace contract={props.contract} assetToken={props.assetToken} peonIds={props.userBids} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
             </div>
           </div>
         </TabPanel>
@@ -84,7 +86,7 @@ export default function MenuCategoriesMarket(props: {marketPeons: number[], user
 
                 </div>
               </div>
-              {props.userAddress ? <CardMarketplace peonIds={props.recentMinted} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
+              {props.userAddress ? <CardMarketplace contract={props.contract} assetToken={props.assetToken} peonIds={props.recentMinted} userAddress={props.userAddress} reload={props.reload} /> : <RequestConnectWallet />}
             </div>
           </div>
         </TabPanel>

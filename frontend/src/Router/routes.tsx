@@ -20,8 +20,10 @@ import NotFound from "../views/NotFound"
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {BigNumber, Transaction} from "ethers";
 import AdminView from "../views/AdminView";
+import PeonContract from "../peoncontract";
 
 export default function AppRoutes(props: {
+    contract: PeonContract,
     userAddress: string | null,
     onLogout: () => void,
     onLogin: () => void,
@@ -38,13 +40,15 @@ export default function AppRoutes(props: {
     reload: (tx: Transaction) => void,
     preSale: boolean,
     mintFee: BigNumber,
-    mint: () => void
+    mint: () => void,
+    assetToken: string
 }) {
     return (
         <>
             <BrowserRouter>
                 <Routes>
                     <Route path="/" element={<Marketplace
+                        contract={props.contract}
                         userAddress={props.userAddress}
                         onLogout={props.onLogout}
                         onLogin={props.onLogin}
@@ -61,8 +65,9 @@ export default function AppRoutes(props: {
                         reload={props.reload}
                         mintFee={props.mintFee}
                         mint={props.mint}
+                        assetToken={props.assetToken}
                     />} />
-                    <Route path="/admin" element={<AdminView userAddress={props.userAddress}
+                    <Route path="/admin" element={<AdminView contract={props.contract} userAddress={props.userAddress}
                                                              onLogout={props.onLogout}
                                                              onLogin={props.onLogin}
                                                              balance={props.balance}

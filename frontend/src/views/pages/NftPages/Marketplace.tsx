@@ -7,6 +7,7 @@ import useDocumentTitle from '../../../components/useDocumentTitle';
 import MenuCategoriesMarket from '../elements/MenuCategoriesMarket';
 import Hero1 from "../../../components/hero/Hero1";
 import {BigNumber, Transaction} from "ethers";
+import PeonContract from "../../../peoncontract";
 
 export default function Marketplace(props: {
     userAddress: string | null,
@@ -24,13 +25,16 @@ export default function Marketplace(props: {
     recentMinted: number[],
     reload: (tx: Transaction) => void,
     mintFee: BigNumber
-    mint: () => void
+    mint: () => void,
+    assetToken: string,
+    contract: PeonContract
 }) {
     useDocumentTitle(' Marketplace');
     return (
         <div>
             <Header userAddress={props.userAddress} onLogout={props.onLogout} onLogin={props.onLogin} balance={props.balance} tokenBalance={props.tokenBalance} />
             <Hero1
+                assetToken={props.assetToken}
                 peonLeftToMin={props.peonLeftToMin}
                 costToMint={props.costToMint}
                 mintedPeon={props.mintedPeon}
@@ -41,7 +45,7 @@ export default function Marketplace(props: {
                 mint={props.mint}
             />
             <div className="d-flex justify-content-center">
-                <MenuCategoriesMarket marketPeons={props.marketPeons} recentMinted={props.recentMinted}
+                <MenuCategoriesMarket contract={props.contract} assetToken={props.assetToken} marketPeons={props.marketPeons} recentMinted={props.recentMinted}
                                       userBids={props.userBids} userPeons={props.userPeons}
                                       userAddress={props.userAddress} reload={props.reload}/>
             </div>
