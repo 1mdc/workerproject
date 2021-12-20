@@ -1,6 +1,7 @@
 import React from 'react';
 import {BigNumber, Transaction} from "ethers";
 import Banana from "../Banana";
+import {Link} from "react-router-dom";
 
 export default function Hero1(props: {
     peonLeftToMin: number,
@@ -18,17 +19,19 @@ export default function Hero1(props: {
         <div className="hero__1">
             <div className="container">
                 <div className="row align-items-center">
-                    <div className="col-lg-6">
+                    <div className="col-lg-12">
                         <div className="hero__left space-y-20">
                             <h1 className="hero__title">
-                                Peon Ecosystem
+                                Peon NFT & pBANANA
                             </h1>
                             <p className="hero__text txt">
-                                Peon NFT is an important asset for Peon Ecosystem. It generates pBANANA token (<Banana />) that could be used as
-                                currency in games and also can be used to exchange to other tokens.
+                                Most of NFT games are not so attractive to play.
                             </p>
                             <p className="hero__text txt">
-                                <b>{props.peonLeftToMin} Peons</b> left can be minted in this sale. Cost to mint is <b>{props.costToMint} {props.assetToken}</b>. <b>{props.mintedPeon}/{props.totalCapPeon}</b> peons
+                                Introducing Peon NFT. an <s>Play</s> Own to earn NFT. By owning <b>Peons</b>, you can earn <b>pBANANA</b> token (<Banana />) which has utility. Please read more in <Link to="/faqs">FAQs</Link>.
+                            </p>
+                            <p className="hero__text txt">
+                                <b>{props.peonLeftToMin} Peons</b> left can be minted in the current sale. Cost to mint is <b>{props.costToMint} {props.assetToken}</b>. <b>{props.mintedPeon}/{props.totalCapPeon}</b> peons
                                 minted so far.
                             </p>
                             <div
@@ -40,14 +43,14 @@ export default function Hero1(props: {
                             </div>
                         </div>
                     </div>
-                    <div className="col-lg-6">
-                        <img
-                            className="img-fluid w-full"
-                            id="img_js"
-                            src="img/bg/in_hero1.png"
-                            alt="img"
-                        />
-                    </div>
+                    {/*<div className="col-lg-6">*/}
+                    {/*    <img*/}
+                    {/*        className="img-fluid w-full"*/}
+                    {/*        id="img_js"*/}
+                    {/*        src="img/bg/in_hero1.png"*/}
+                    {/*        alt="img"*/}
+                    {/*    />*/}
+                    {/*</div>*/}
                 </div>
             </div>
         </div>

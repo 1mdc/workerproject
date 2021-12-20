@@ -8,7 +8,11 @@ import Banana from "../Banana";
 const PagesMenu = [
   {
     title: 'Marketplace',
-    link: '/',
+    link: '/'
+  },
+  {
+    title: 'FAQs',
+    link: '/faqs'
   },
 ];
 
@@ -31,7 +35,7 @@ export default function Header(props: { userAddress: string | null, onLogout: ()
                   <img
                       className="header__logo"
                       id="logo_js"
-                      src="img/logos/Logo.svg"
+                      src="img/logo.png"
                       alt="logo"
                   />
                 </Link>

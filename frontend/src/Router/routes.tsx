@@ -21,6 +21,7 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {BigNumber, Transaction} from "ethers";
 import AdminView from "../views/AdminView";
 import PeonContract from "../peoncontract";
+import Faq from "../views/Faq";
 
 export default function AppRoutes(props: {
     contract: PeonContract,
@@ -75,6 +76,8 @@ export default function AppRoutes(props: {
                                                              reload={props.reload}
                                                              preSale={props.preSale}
                                                             />} />
+                    <Route path="/faqs" element={<Faq userAddress={props.userAddress} onLogout={props.onLogout} onLogin={props.onLogin}
+                        balance={props.balance} tokenBalance={props.tokenBalance} />} />
                     <Route element={<NotFound />} />
                 </Routes>
             </BrowserRouter>
