@@ -17,7 +17,7 @@ import NotFound from "../views/NotFound"
 
 
 // Route Specific
-import {BrowserRouter, Route, Routes} from "react-router-dom";
+import {HashRouter, Route, Routes} from "react-router-dom";
 import {BigNumber, Transaction} from "ethers";
 import AdminView from "../views/AdminView";
 import PeonContract from "../peoncontract";
@@ -42,11 +42,14 @@ export default function AppRoutes(props: {
     preSale: boolean,
     mintFee: BigNumber,
     mint: () => void,
-    assetToken: string
+    assetToken: string,
+    peonAddress: string
+    goldAddress: string,
+    isAdmin: boolean,
 }) {
     return (
         <>
-            <BrowserRouter>
+            <HashRouter>
                 <Routes>
                     <Route path="/" element={<Marketplace
                         contract={props.contract}
@@ -67,6 +70,7 @@ export default function AppRoutes(props: {
                         mintFee={props.mintFee}
                         mint={props.mint}
                         assetToken={props.assetToken}
+                        isAdmin={props.isAdmin}
                     />} />
                     <Route path="/admin" element={<AdminView contract={props.contract} userAddress={props.userAddress}
                                                              onLogout={props.onLogout}
@@ -75,12 +79,21 @@ export default function AppRoutes(props: {
                                                              tokenBalance={props.tokenBalance}
                                                              reload={props.reload}
                                                              preSale={props.preSale}
+                                                             isAdmin={props.isAdmin}
                                                             />} />
-                    <Route path="/faqs" element={<Faq userAddress={props.userAddress} onLogout={props.onLogout} onLogin={props.onLogin}
-                        balance={props.balance} tokenBalance={props.tokenBalance} />} />
+                    <Route path="/faqs" element={<Faq
+                        userAddress={props.userAddress}
+                        onLogout={props.onLogout}
+                        onLogin={props.onLogin}
+                        balance={props.balance}
+                        tokenBalance={props.tokenBalance}
+                        peonAddress={props.peonAddress}
+                        pgoldAddress={props.goldAddress}
+                        isAdmin={props.isAdmin}
+                    />} />
                     <Route element={<NotFound />} />
                 </Routes>
-            </BrowserRouter>
+            </HashRouter>
         </>
     );
 };

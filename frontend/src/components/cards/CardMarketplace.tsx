@@ -92,7 +92,7 @@ function PeonCard(props: { contract: PeonContract, assetToken: string, peonId: n
             <div className="card_body space-y-10">
                 {/* =============== */}
                 <div className="card_head">
-                    <img src={`peons/${peon.efficiency}.gif`} alt={`peon_${peon.efficiency}`}/>
+                    <img src={`peon-img/${peon.efficiency}.gif`} alt={`peon_${peon.efficiency}`}/>
                     {peon && peon.bids.length > 0 ? <div className="likes space-x-3">
                         <i className="ri-heart-3-fill"/>
                         <span className="txt_sm">{peon.bids.length}</span>
@@ -110,8 +110,8 @@ function PeonCard(props: { contract: PeonContract, assetToken: string, peonId: n
                             {peon.bids.length > 0 ? <p className="txt_sm">Offer: <span
                                 className="color_green txt_sm">{bigToNumber(BigNumber.from(peon.bids.sort((a, b) => a.value > b.value ? 1 : -1)[0].value.toString()), 5, 18)} BNB</span>
                             </p> : null}
-                            <p className="txt_sm">Mine: <span
-                                className="color_green txt_sm">{parseInt(peon.efficiency.toString()) / 100} <Banana /></span>
+                            <p className="txt_sm">Speed:<span
+                                className="color_green txt_sm">{parseInt(peon.efficiency.toString()) / 100}<Banana /></span>
                             </p>
                         </div>
                     </div>

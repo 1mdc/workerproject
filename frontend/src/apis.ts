@@ -34,28 +34,29 @@ interface PeonCountDto {
 }
 
 const client = axios
+const backendEndpoint = process.env.REACT_APP_BACKEND_ENDPOINT || "";
 
 export function getPeonCount(): Promise<number> {
-    return client.get<PeonCountDto>("http://localhost:8080/count-peons").then(resp => resp.data.peons);
+    return client.get<PeonCountDto>(`${backendEndpoint}/count-peons`).then(resp => resp.data.peons);
 }
 
 export function getOwnerPeons(address: string): Promise<number[]> {
-    return client.get<number[]>(`http://localhost:8080/owned-peons/${address}`).then(resp => resp.data);
+    return client.get<number[]>(`${backendEndpoint}/owned-peons/${address}`).then(resp => resp.data);
 }
 
 export function getLastMintedPeons(): Promise<number[]> {
-    return client.get<number[]>(`http://localhost:8080/peons`).then(resp => resp.data);
+    return client.get<number[]>(`${backendEndpoint}/peons`).then(resp => resp.data);
 }
 
 export function getPeonDetail(peonId: number): Promise<Peon> {
-    return client.get<Peon>(`http://localhost:8080/peons/${peonId}`).then(resp => resp.data);
+    return client.get<Peon>(`${backendEndpoint}/peons/${peonId}`).then(resp => resp.data);
 }
 
-export function getBiddings(address: string): Promise<number[]> {
-    return client.get<number[]>(`http://localhost:8080/bidding-peons/${address}`).then(resp => resp.data);
+export function getBids(address: string): Promise<number[]> {
+    return client.get<number[]>(`${backendEndpoint}/bids/${address}`).then(resp => resp.data);
 }
 
 export function getRandomPeons(): Promise<number[]> {
-    return client.get<number[]>(`http://localhost:8080/market`).then(resp => resp.data);
+    return client.get<number[]>(`${backendEndpoint}/market`).then(resp => resp.data);
 }
 

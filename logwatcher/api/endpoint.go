@@ -5,19 +5,30 @@ import (
 	ptypes "com.peon/logwatcher/types"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"io/fs"
 	"net/http"
 	"os"
 	"strconv"
 )
 
-func RunServer(db *gorm.DB) {
+var (
+	PeonCount        = repositories.PeonCount
+	GetRandomPeons   = repositories.GetRandomPeons
+	GetBidsByAddress = repositories.GetBidsByAddress
+	GetOwnedPeons    = repositories.GetOwnedPeons
+	GetNewPeons      = repositories.GetNewPeons
+	GetPeon          = repositories.GetPeon
+)
+
+func RunServer(db *gorm.DB, appPort uint, reactBuildFolder fs.FS) {
 	router := mux.NewRouter()
 	router.HandleFunc("/count-peons", func(w http.ResponseWriter, r *http.Request) {
-		count, err := repositories.PeonCount(db)
+		count, err := PeonCount(db)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logrus.Error(err)
@@ -29,7 +40,7 @@ func RunServer(db *gorm.DB) {
 		}
 	})
 	router.HandleFunc("/market", func(w http.ResponseWriter, r *http.Request) {
-		peonIds, err := repositories.GetRandomPeons(db)
+		peonIds, err := GetRandomPeons(db)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logrus.Error(err)
@@ -37,7 +48,7 @@ func RunServer(db *gorm.DB) {
 		}
 		json.NewEncoder(w).Encode(peonIds)
 	})
-	router.HandleFunc("/bidding-peons/{address}", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/bids/{address}", func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		address, exist := params["address"]
 		if !exist {
@@ -45,14 +56,14 @@ func RunServer(db *gorm.DB) {
 			logrus.Error("Missing address parameter")
 			return
 		}
-		biddings, err := repositories.GetBiddingsByAddress(db, address)
+		bids, err := GetBidsByAddress(db, address)
 		peonIds := make([]uint, 0)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logrus.Error(err)
 			return
 		}
-		for _, bid := range biddings {
+		for _, bid := range bids {
 			peonIds = append(peonIds, bid.PeonId)
 		}
 		json.NewEncoder(w).Encode(peonIds)
@@ -65,7 +76,7 @@ func RunServer(db *gorm.DB) {
 			logrus.Error("Missing address parameter")
 			return
 		}
-		peonIds, err := repositories.GetOwnedPeons(db, ownerAddress)
+		peonIds, err := GetOwnedPeons(db, ownerAddress)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logrus.Error(err)
@@ -74,7 +85,7 @@ func RunServer(db *gorm.DB) {
 		json.NewEncoder(w).Encode(peonIds)
 	})
 	router.HandleFunc("/peons", func(w http.ResponseWriter, r *http.Request) {
-		newPeons, err := repositories.GetNewPeons(db)
+		newPeons, err := GetNewPeons(db)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logrus.Error(err)
@@ -96,7 +107,7 @@ func RunServer(db *gorm.DB) {
 			logrus.Error(err)
 			return
 		}
-		peon, err := repositories.GetPeon(db, uint(peonId))
+		peon, err := GetPeon(db, uint(peonId))
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				w.WriteHeader(http.StatusNotFound)
@@ -115,6 +126,8 @@ func RunServer(db *gorm.DB) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(peon)
 	})
+	router.PathPrefix("/").Handler(http.FileServer(http.FS(reactBuildFolder)))
+
 	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
 	logrus.Info("Server is running at :8080...")
 
@@ -125,5 +138,5 @@ func RunServer(db *gorm.DB) {
 
 	compressedRouter := handlers.CompressHandler(corsedRouter)
 
-	http.ListenAndServe(":8080", compressedRouter)
+	http.ListenAndServe(fmt.Sprintf(":%d", appPort), compressedRouter)
 }

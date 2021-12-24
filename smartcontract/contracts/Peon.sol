@@ -159,7 +159,7 @@ contract Peon is ERC721 {
         uint256 numberOfBlocks = block.number - lastHarvestedBlock[peonId];
         uint pow = IMintableERC20(mineralTokenAddress).decimals();
         uint256 distributedReward = numberOfBlocks * 10**pow / (mintedPeon * 2);
-        return distributedReward * 10**pow * efficiency[peonId] / 10**pow;
+        return distributedReward * efficiency[peonId] / 100;
     }
 
     function withdraw() public payable onlyKeeper {

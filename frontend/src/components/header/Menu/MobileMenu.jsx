@@ -51,7 +51,7 @@ function MobileMenu() {
             </button>
           </div>
           <Link className="btn btn-grad btn-sm" to="connect-wallet">
-            Connect wallet
+            Connect BSC Testnet
           </Link>
         </div>
       </div>

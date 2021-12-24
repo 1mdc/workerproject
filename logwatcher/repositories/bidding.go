@@ -19,12 +19,12 @@ func GetBidValue(db *gorm.DB, peonId uint, address string) (uint64, error) {
 	return row.BiddingAmount, result.Error
 }
 
-func DeleteBidding(db *gorm.DB, peonId uint, address string) error {
+func DeleteBid(db *gorm.DB, peonId uint, address string) error {
 	result := db.Where("peon_id = ? AND LOWER(bidding_address) = LOWER(?)", peonId, address).Delete(&BiddingTable{})
 	return result.Error
 }
 
-func InsertBidding(db *gorm.DB, bid *BiddingTable) (int, error) {
+func InsertBid(db *gorm.DB, bid *BiddingTable) (int, error) {
 	result := db.Create(bid)
 	return int(result.RowsAffected), result.Error
 }
@@ -43,7 +43,7 @@ func GetAllBids(db *gorm.DB, peonId uint) ([]types.PeonBid, error) {
 	return data, result.Error
 }
 
-func GetBiddingsByAddress(db *gorm.DB, address string) ([]BiddingTable, error) {
+func GetBidsByAddress(db *gorm.DB, address string) ([]BiddingTable, error) {
 	data := make([]BiddingTable, 0)
 	result := db.Where("LOWER(bidding_address) = LOWER(?)", address).Find(&data)
 	return data, result.Error

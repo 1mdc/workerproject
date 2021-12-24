@@ -32,3 +32,10 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+/**
+ * BSC Testnet:
+ * admin 0x37666842CBa15e7658380b37181B67989a596CF0
+ * pbanana 0xF082dDdaD551E9e0d184bD7e4977589b54Cb6300
+ * peon 0x0d4b8062edC1D7B3209275390fD441e93BA952cb
+ */

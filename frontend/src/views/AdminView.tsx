@@ -23,6 +23,7 @@ export default function AdminView(props:{
     tokenBalance: number,
     reload: (tx: Transaction) => void,
     preSale: boolean,
+    isAdmin: boolean,
 }) {
     const saleForm = useForm<SaleForm>();
     const presaleForm = useForm<PreSaleForm>();
@@ -41,7 +42,7 @@ export default function AdminView(props:{
     }
 
     return (<div>
-        <Header userAddress={props.userAddress} onLogout={props.onLogout} onLogin={props.onLogin} balance={props.balance} tokenBalance={props.tokenBalance} />
+        <Header userAddress={props.userAddress} onLogout={props.onLogout} onLogin={props.onLogin} balance={props.balance} tokenBalance={props.tokenBalance} isAdmin={props.isAdmin} />
         <div className="d-flex justify-content-center">
             <div className="box is__big">
                 <h1>Admin Panel</h1>

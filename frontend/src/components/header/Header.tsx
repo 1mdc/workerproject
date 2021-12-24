@@ -17,7 +17,8 @@ const PagesMenu = [
 ];
 
 export default function Header(props: { userAddress: string | null, onLogout: () => void,
-  onLogin: () => void, balance: number, tokenBalance: number }) {
+  onLogin: () => void, balance: number, tokenBalance: number,
+  isAdmin: boolean}) {
   const [isActive, setActive] = useState(false);
   const toggleClass = () => {
     setActive(!isActive);
@@ -50,6 +51,11 @@ export default function Header(props: { userAddress: string | null, onLogout: ()
                         </Link>
                       </li>
                   ))}
+                  {props.isAdmin ? <li key="admin">
+                    <Link className="color_black" to="/admin">
+                      Admin
+                    </Link>
+                  </li> : null}
                 </ul>
               </div>
               {/* ================= */}
@@ -100,7 +106,7 @@ export default function Header(props: { userAddress: string | null, onLogout: ()
                   </div>
                 </Popup> : <button onClick={props.onLogin} className="btn btn-grad btn-sm">
                   <i className="ri-wallet-3-line" />
-                  Connect wallet
+                  Connect BSC Testnet
                 </button>}
               </div>
             </div>

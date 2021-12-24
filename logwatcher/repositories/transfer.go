@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+var (
+	zeroAddress = "0x0000000000000000000000000000000000000000"
+)
+
 type TransferLogTable struct {
 	TransactionId string `gorm:"primaryKey"`
 	PeonId        uint   `gorm:"primaryKey"`
@@ -22,13 +26,13 @@ func InsertTransferLog(db *gorm.DB, log *TransferLogTable) (int, error) {
 
 func PeonCount(db *gorm.DB) (uint, error) {
 	var count uint = 0
-	row := db.Raw("SELECT COUNT(*) FROM (SELECT DISTINCT peon_id FROM transfer_log_tables WHERE from_address=?)", "0x0000000000000000000000000000000000000000").Row()
+	row := db.Raw("SELECT COUNT(*) FROM (SELECT DISTINCT peon_id FROM transfer_log_tables WHERE from_address=?)", zeroAddress).Row()
 	err := row.Scan(&count)
 	return count, err
 }
 
 func GetNewPeons(db *gorm.DB) ([]uint, error) {
-	rows, err := db.Raw("SELECT peon_id FROM transfer_log_tables WHERE from_address=? ORDER BY created_at DESC LIMIT 10", "0x0000000000000000000000000000000000000000").Rows()
+	rows, err := db.Raw("SELECT peon_id FROM transfer_log_tables WHERE from_address=? ORDER BY created_at DESC LIMIT 10", zeroAddress).Rows()
 	data := make([]uint, 0)
 	for rows.Next() {
 		var peonId uint = 0

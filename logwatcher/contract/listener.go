@@ -5,6 +5,7 @@ import (
 	"com.peon/logwatcher/repositories"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -25,7 +26,7 @@ var (
 	peonMintedEventHash = crypto.Keccak256Hash([]byte("PeonMintedEvent(uint256,uint256)"))
 )
 
-func ListenToEvents(db *gorm.DB, client *ethclient.Client, addressToListen string, startBlock uint64) {
+func ListenToEvents(db *gorm.DB, client *ethclient.Client, addressToListen string, startBlock uint64, listenInterval uint, batchSize uint64) {
 	contractAddress := common.HexToAddress(addressToListen)
 
 	logrus.Infof("watching bidEventHash: %s", bidEventHash)
@@ -36,24 +37,27 @@ func ListenToEvents(db *gorm.DB, client *ethclient.Client, addressToListen strin
 	logrus.Infof("Listen to event at %s", bidEventHash)
 	for {
 		err := db.Transaction(func(tx *gorm.DB) error {
-			err := listenToBlock(db, client, startBlock, contractAddress)
+			err := listenToBlock(db, client, startBlock, contractAddress, batchSize)
 			if err != nil {
-				time.Sleep(15 * time.Second)
+				time.Sleep(time.Duration(listenInterval) * time.Second)
 			}
 			return err
 		})
-		if err != nil {
+		if err != nil && fmt.Sprint(err) != "no thing to update" {
 			logrus.Error("error while doing transaction")
 		}
 	}
 }
 
-func listenToBlock(db *gorm.DB, client *ethclient.Client, startBlock uint64, contractAddress common.Address) error {
-	checkpoint, toCheckpoint, err := getFetchCheckpoint(db, client, startBlock)
+func listenToBlock(db *gorm.DB, client *ethclient.Client, startBlock uint64, contractAddress common.Address, batchSize uint64) error {
+	checkpoint, toCheckpoint, err := getFetchCheckpoint(db, client, startBlock, batchSize)
 	if err != nil {
 		logrus.Error("unable to fetch checkpoint: ", err)
 		return err
 	} else {
+		if checkpoint == 0 && toCheckpoint == 0 {
+			return errors.New("no thing to update")
+		}
 		logrus.Infof("fetching from block number %d to %d", checkpoint+1, toCheckpoint)
 		vLogs, err := client.FilterLogs(context.Background(), ethereum.FilterQuery{
 			FromBlock: big.NewInt(int64(checkpoint + 1)),
@@ -81,7 +85,7 @@ func listenToBlock(db *gorm.DB, client *ethclient.Client, startBlock uint64, con
 	}
 }
 
-func getFetchCheckpoint(db *gorm.DB, client *ethclient.Client, startBlock uint64) (uint64, uint64, error) {
+func getFetchCheckpoint(db *gorm.DB, client *ethclient.Client, startBlock uint64, batchSize uint64) (uint64, uint64, error) {
 	lastCheckpoint, err := repositories.GetLastCheckpoint(db, startBlock)
 	if err != nil {
 		logrus.Error("Unable get last block number from db")
@@ -95,7 +99,8 @@ func getFetchCheckpoint(db *gorm.DB, client *ethclient.Client, startBlock uint64
 	}
 	logrus.Info("found onchain checkpoint ", onchainCheckpoint)
 	if lastCheckpoint >= onchainCheckpoint {
-		return 0, 0, errors.New("already on latest block number")
+		logrus.Info("already on latest block number")
+		return 0, 0, nil
 	}
 	var checkpoint uint64
 	if lastCheckpoint == 0 {
@@ -107,7 +112,7 @@ func getFetchCheckpoint(db *gorm.DB, client *ethclient.Client, startBlock uint64
 	} else {
 		checkpoint = lastCheckpoint
 	}
-	toBlock := uint64(math.Min(float64(onchainCheckpoint), 252)) // 1 hour batch per fetch
+	toBlock := uint64(math.Min(float64(onchainCheckpoint), float64(lastCheckpoint+batchSize))) // 1 hour batch per fetch
 	return checkpoint, toBlock, err
 }
 
@@ -121,7 +126,7 @@ func readLog(db *gorm.DB, vLog types.Log) error {
 			Amount: vLog.Topics[3].Big(),
 		}
 		logrus.Infof("BidEvent: %#v", event)
-		_, err := repositories.InsertBidding(db, &repositories.BiddingTable{
+		_, err := repositories.InsertBid(db, &repositories.BiddingTable{
 			PeonId:         event.PeonId,
 			BiddingAddress: event.Buyer.String(),
 			BiddingAmount:  event.Amount.Uint64(),
@@ -156,7 +161,7 @@ func readLog(db *gorm.DB, vLog types.Log) error {
 			logrus.Errorf("Unable to find bid value %#v: %#v", event, err)
 			return err
 		} else {
-			err := repositories.DeleteBidding(db, event.PeonId, event.Buyer.String())
+			err := repositories.DeleteBid(db, event.PeonId, event.Buyer.String())
 			if err != nil {
 				logrus.Errorf("Unable to save event %#v: %#v", event, err)
 				return err
@@ -186,7 +191,7 @@ func readLog(db *gorm.DB, vLog types.Log) error {
 			Buyer:  common.HexToAddress(vLog.Topics[2].Hex()),
 		}
 		logrus.Infof("CancelEvent: %#v", event)
-		err := repositories.DeleteBidding(db, event.PeonId, event.Buyer.String())
+		err := repositories.DeleteBid(db, event.PeonId, event.Buyer.String())
 		if err != nil {
 			logrus.Errorf("Unable to save event %#v: %#v", event, err)
 			return err

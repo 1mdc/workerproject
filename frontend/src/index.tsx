@@ -9,10 +9,11 @@ const assetToken = "BNB";
 const chainId = parseInt(process.env.REACT_APP_CHAINID || "0");
 const peonAddress = process.env.REACT_APP_PEON_ADDRESS || "0xerror";
 const pGoldAddress = process.env.REACT_APP_GOLD_ADDRESS || "0xerror";
+const rpcEndpoint = process.env.REACT_APP_NETWORK_RPC_ENDPOINT || "http://localhost:8545";
 const contract = new PeonContract(peonAddress, pGoldAddress)
 ReactDOM.render(
     <UseWalletProvider>
-        <App contract={contract} chainId={chainId} assetToken={assetToken} goldAddress={pGoldAddress} peonAddress={peonAddress} />
+        <App contract={contract} chainId={chainId} assetToken={assetToken} goldAddress={pGoldAddress} peonAddress={peonAddress} rpcEndpoint={rpcEndpoint} />
     </UseWalletProvider>,
     document.getElementById('root')
 );

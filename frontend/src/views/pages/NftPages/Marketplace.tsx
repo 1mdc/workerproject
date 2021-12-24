@@ -27,12 +27,19 @@ export default function Marketplace(props: {
     mintFee: BigNumber
     mint: () => void,
     assetToken: string,
-    contract: PeonContract
+    contract: PeonContract,
+    isAdmin: boolean
 }) {
     useDocumentTitle(' Marketplace');
     return (
         <div>
-            <Header userAddress={props.userAddress} onLogout={props.onLogout} onLogin={props.onLogin} balance={props.balance} tokenBalance={props.tokenBalance} />
+            <Header userAddress={props.userAddress}
+                    onLogout={props.onLogout}
+                    onLogin={props.onLogin}
+                    balance={props.balance}
+                    tokenBalance={props.tokenBalance}
+                    isAdmin={props.isAdmin}
+            />
             <Hero1
                 assetToken={props.assetToken}
                 peonLeftToMin={props.peonLeftToMin}
