@@ -100,13 +100,13 @@ export default function Faq(props: {
     },
     {
       title: 'Where is the best place to discuss this project?',
-      desc: `Join out community in Telegram`,
+      desc: `Join out community in Telegram https://t.me/peonfamcommunity`,
       expand: 'community',
       link: 'community',
     },
   ];
 
-  useDocumentTitle('Faq');
+  useDocumentTitle('PeonFam - Faq');
   return (
     <div>
       <Header userAddress={props.userAddress} onLogout={props.onLogout}

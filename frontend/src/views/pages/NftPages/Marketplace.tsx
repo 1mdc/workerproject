@@ -30,7 +30,7 @@ export default function Marketplace(props: {
     contract: PeonContract,
     isAdmin: boolean
 }) {
-    useDocumentTitle(' Marketplace');
+    useDocumentTitle('PeonFam - Marketplace');
     return (
         <div>
             <Header userAddress={props.userAddress}

@@ -19,7 +19,7 @@ function Footer() {
               <div>
                 <ul className="footer__social space-x-10 mb-40">
                   <li>
-                    <a href="https://www.facebook.com/" rel="noreferrer"  target="_blank">
+                    <a href="https://t.me/peonfamcommunity" rel="noreferrer"  target="_blank">
                       <i className="ri-telegram-line" />
                     </a>
                   </li>

@@ -4,8 +4,8 @@ import Footer from '../components/footer/Footer';
 import Header from '../components/header/Header';
 import useDocumentTitle from '../components/useDocumentTitle';
 
-const NotFound = () => {
-  useDocumentTitle(' Page Not Found ');
+export default function NotFound(){
+  useDocumentTitle('PeonFam - Page Not Found ');
   return (
     <div>
       <Header />
@@ -52,5 +52,3 @@ const NotFound = () => {
     </div>
   );
 };
-
-export default NotFound;

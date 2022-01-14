@@ -1,9 +1,10 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import {Transaction} from "ethers";
 import {useForm} from "react-hook-form";
 import PeonContract from "../peoncontract";
+import {bigToNumber} from "../utils";
 
 interface SaleForm {
     numberOfPeons: number;
@@ -12,6 +13,9 @@ interface SaleForm {
 
 interface PreSaleForm {
     receiver: string;
+}
+
+interface WithdrawForm {
 }
 
 export default function AdminView(props:{
@@ -27,6 +31,14 @@ export default function AdminView(props:{
 }) {
     const saleForm = useForm<SaleForm>();
     const presaleForm = useForm<PreSaleForm>();
+    const withdrawForm = useForm<WithdrawForm>();
+    const [withdrawAmount, setWithdrawAmount] = useState(0);
+
+    useEffect(() => {
+        if (props.userAddress) {
+            props.contract.getWithdrawAmount(props.contract.getSigner(props.userAddress)).then(funds => setWithdrawAmount(bigToNumber(funds, 5, 18)))
+        }
+    })
 
     const onSubmitPresale = (data: PreSaleForm) => {
         if (props.userAddress) props.contract.callPresale(props.contract.getSigner(props.userAddress), data.receiver).then(props.reload);
@@ -39,6 +51,10 @@ export default function AdminView(props:{
 
     const onSubmitSale = (data: SaleForm) => {
         if (props.userAddress) props.contract.startSale(props.contract.getSigner(props.userAddress), data.numberOfPeons, data.feeIncrease).then(props.reload);
+    }
+
+    const onWithdraw = (data: WithdrawForm) => {
+        if (props.userAddress) props.contract.withdraw(props.contract.getSigner(props.userAddress)).then(props.reload);
     }
 
     return (<div>
@@ -65,6 +81,12 @@ export default function AdminView(props:{
                         Number of sales: <input type="number" {...saleForm.register("numberOfPeons")} />
                         Fee Increase: <input type="number" {...saleForm.register("feeIncrease")} step="any"/>
                         <input className="btn btn-primary" type="submit" value="Start Sale"/>
+                    </div>
+                </form>
+                <form onSubmit={withdrawForm.handleSubmit(onWithdraw)}>
+                    <div>
+                        <p>Withdraw amount {withdrawAmount}</p>
+                        <input className="btn btn-primary" type="submit" value="Withdraw Funds"/>
                     </div>
                 </form>
             </div>

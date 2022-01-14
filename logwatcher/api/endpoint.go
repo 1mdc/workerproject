@@ -26,6 +26,12 @@ var (
 )
 
 func RunServer(db *gorm.DB, appPort uint, reactBuildFolder fs.FS) {
+	compressedRouter := CreateServerResource(db, reactBuildFolder)
+
+	http.ListenAndServe(fmt.Sprintf(":%d", appPort), compressedRouter)
+}
+
+func CreateServerResource(db *gorm.DB, reactBuildFolder fs.FS) http.Handler {
 	router := mux.NewRouter()
 	router.HandleFunc("/count-peons", func(w http.ResponseWriter, r *http.Request) {
 		count, err := PeonCount(db)
@@ -137,6 +143,5 @@ func RunServer(db *gorm.DB, appPort uint, reactBuildFolder fs.FS) {
 	corsedRouter := handlers.CORS(headersOK, originsOK, methodsOK)(loggedRouter)
 
 	compressedRouter := handlers.CompressHandler(corsedRouter)
-
-	http.ListenAndServe(fmt.Sprintf(":%d", appPort), compressedRouter)
+	return compressedRouter
 }

@@ -10,6 +10,7 @@ import {useWallet} from "use-wallet";
 import {bigToNumber} from "./utils";
 import {toast, ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ReactGA from "react-ga4";
 
 export default function App(props: { contract: PeonContract, chainId: number, peonAddress: string, goldAddress: string, assetToken: string, rpcEndpoint: string }) {
     const wallet = useWallet();
@@ -24,38 +25,65 @@ export default function App(props: { contract: PeonContract, chainId: number, pe
     const [userBids, setUserBids] = useState<number[]>([])
     const [marketPeons, setMarketPeons] = useState<number[]>([]);
     const [adminAddress, setAdminAddress] = useState("");
+    const [connectedChainId, setConnectedChainId] = useState(-1);
+
+    ReactGA.send({hitType: "pageview", path: window.location.pathname + window.location.hash});
 
     useEffect(() => {
         // Check if MetaMask is installed
         // MetaMask injects the global API into window.ethereum
         if (window.ethereum) {
             window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{chainId: "0x" + props.chainId.toString(16)}], // chainId must be in hexadecimal numbers
-            }).catch((error: any) => {
-                // This error code indicates that the chain has not been added to MetaMask
-                // if it is not, then install it into the user MetaMask
-                // @ts-ignore
-                if (error.code === 4902) {
+                method: 'eth_chainId',
+            }).then((chainIdHex: string) => {
+                let chainId = parseInt(chainIdHex, 16)
+                setConnectedChainId(chainId);
+                if (chainId !== props.chainId) {
                     window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [
-                            {
-                                chainId: "0x" + props.chainId.toString(16),
-                                rpcUrl: props.rpcEndpoint,
-                            },
-                        ],
-                    }).catch((addError: any) => {
-                        console.error(addError);
+                        method: 'wallet_switchEthereumChain',
+                        params: [{chainId: "0x" + props.chainId.toString(16)}], // chainId must be in hexadecimal numbers
+                    }).then(() => window.location.reload()).catch((error: any) => {
+                        // This error code indicates that the chain has not been added to MetaMask
+                        // if it is not, then install it into the user MetaMask
+                        // @ts-ignore
+                        if (error.code === 4902) {
+                            window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [
+                                    {
+                                        chainId: "0x" + props.chainId.toString(16),
+                                        chainName: "Binance Smart Chain Testnet",
+                                        nativeCurrency: {
+                                            name: "BNB",
+                                            symbol: "BNB",
+                                            decimals: 18,
+                                        },
+                                        rpcUrls: ["https://data-seed-prebsc-1-s1.binance.org:8545"],
+                                        blockExplorerUrls: ["https://testnet.bscscan.com"]
+                                    },
+                                ],
+                            }).then(() => window.location.reload()).catch((addError: any) => {
+                                console.error(addError);
+                            })
+                        }
+                        console.error(error);
                     })
+                } else {
+                    console.log("user already on chainId " + chainId)
                 }
-                console.error(error);
             })
         }
     }, [])
 
+    useEffect(() => {
+        if (connectedChainId !== -1)
+            onLogin()
+    }, [connectedChainId])
+
     function onLogin() {
-        wallet.connect("injected").catch((err) => toast(err.message))
+        wallet.connect("injected").then(() => {
+            ReactGA.set({userAddress: wallet.account});
+        }).catch((err) => toast(err.message))
     }
 
     function onLogout() {

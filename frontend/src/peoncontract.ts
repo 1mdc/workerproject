@@ -115,5 +115,15 @@ export default class PeonContract {
     getAdminAddress(): Promise<string> {
         return this.peonContract.treasuryKeeperAddress();
     }
+
+    getWithdrawAmount(signer: JsonRpcSigner):Promise<BigNumber> {
+        return this.peonContract.connect(signer).withdrawAmount().then((data: any) => BigNumber.from(data.toBigInt().toString()));
+    }
+
+    withdraw(signer: JsonRpcSigner): Promise<Transaction> {
+        return this.peonContract.connect(signer).withraw({
+            gasLimit: 300_000
+        });
+    }
 }
 

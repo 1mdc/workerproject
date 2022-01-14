@@ -165,7 +165,7 @@ contract Peon is ERC721 {
     function withdraw() public payable onlyKeeper {
         require(mintedPeon < openSale, "Sale was not started");
         require(funded > 0, "no fund to withdraw");
-        uint256 withdrawable = funded * mintFee;
+        uint256 withdrawable = withdrawAmount();
         Address.sendValue(payable(treasuryKeeperAddress), withdrawable);
         funded = 0;
     }
